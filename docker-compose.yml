@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  postgres-floristeria:
+    image: postgres:16
+    container_name: db_floristeria_local
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: floristeria_db
+    ports:
+      - "5432:5432"
