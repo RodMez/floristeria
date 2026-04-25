@@ -11,12 +11,12 @@ import java.util.Optional;
 public interface UsuarioAdminRepository extends JpaRepository<UsuarioAdmin, Integer> {
 
     /**
-     * Busca un usuario por email (Optional para UserDetailsService).
+     * Busca un usuario por nombre 
      */
-    Optional<UsuarioAdmin> findByEmail(String email);
+    Optional<UsuarioAdmin> findByNombre(String nombre);
 
     /**
-     * Lista todos los usuarios administradores que pertenecen a un sedeId específico.
+     * Lista todos los usuarios administradores que pertenecen a un sede en específico.
      */
     // CORREGIDO: Sede_Id
     List<UsuarioAdmin> findBySede_Id(Integer sedeId);

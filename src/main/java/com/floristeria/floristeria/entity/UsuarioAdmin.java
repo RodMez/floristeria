@@ -5,7 +5,8 @@ import lombok.*;
 
 @Entity
 @Table(name = "Usuarios_Admin")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -14,6 +15,9 @@ public class UsuarioAdmin {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    
+    @Column(name = "nombre", nullable = false)
+    private String nombre;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sede_id", nullable = true)

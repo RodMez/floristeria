@@ -65,7 +65,7 @@ Para la infraestructura, se ha diseñado un modelo de Hosting Híbrido Costo-Efi
 
 ---
 
-## 4. Arquitectura de Software y Stack Tecnológico (Definitivo)
+## 4. Arquitectura de Software y Stack Tecnológico 
 
 Este proyecto está modelado bajo un paradigma cliente-servidor avanzado y distribuido. Separa las responsabilidades frontales (interfaz gráfica alojada en "El Borde" u "Edge Server") y el back-office empresarial interno centralizado en la nube por contenedores aislados que orquestan bases relacionales estrictas y control de recursos Multimedia.
 
@@ -110,30 +110,13 @@ Su responsabilidad única e inquebrantable será recibir las acciones que unific
 ![Modelo Entidad Relación](FloristeriaDB.png)
 
 ```dbml
-Table Sedes {
-  id int [pk],
-  nombre varchar,
-  ciudad varchar,
-  whatsapp varchar,
-  email varchar
-}
-Table Categorias {
-  id int [pk],
-  nombre varchar
-}
-Table Productos {
-  id int [pk],
-  categoria_id int,
-  nombre varchar,
-  descripcion text,
-  imagen_url varchar,
-  activo_global boolean,
-  creado_en timestamp
-}
+Table Sedes { id int [pk], nombre varchar, ciudad varchar, whatsapp varchar, email varchar }
+Table Categorias { id int [pk], nombre varchar}
+Table Productos { id int [pk], categoria_id int, nombre varchar, descripcion text, imagen_url varchar, activo_global boolean, creado_en timestamp }
 Table Inventario { id int [pk], producto_id int, sede_id int, precio decimal, stock int, disponible boolean } // TABLA PIVOTE CORE
 Table Pedidos { id int [pk], sede_id int, cliente_nombre varchar, cliente_telefono varchar, notas_entrega text, total decimal, estado varchar, creado_en timestamp }
 Table Detalles_Pedido { id int [pk], pedido_id int, producto_id int, cantidad int, precio_unitario decimal, nota_personalizacion varchar }
-Table Usuarios_Admin { id int[pk], sede_id int [null], email varchar, password_hash varchar, rol varchar }
+Table Usuarios_Admin { id int[pk], sede_id int [null], nombre varcahar, email varchar, password_hash varchar, rol varchar }
 ```
 
 Para soportar la regla de negocio Multi-Sede sin duplicar información, la base de datos se ha normalizado separando el catálogo visual de la realidad física del inventario. A continuación, el propósito de cada entidad principal:
@@ -153,9 +136,10 @@ Para garantizar la escalabilidad y el mantenimiento del código en Spring Boot, 
 - `controller/`: Capa de exposición (Endpoints REST). Recibe peticiones HTTP, delega al servicio y retorna respuestas estandarizadas.
 - `dto/`: _Data Transfer Objects_. Clases planas para recibir (Requests) y enviar (Responses) datos, evitando exponer las Entidades de la base de datos directamente.
 - `entity/`: Modelos de dominio mapeados a la base de datos mediante anotaciones JPA/Hibernate.
-- `exception/`: Manejo global de errores (`@ControllerAdvice`) para capturar excepciones y devolver JSONs estructurados (Ej: 404 Not Found, 400 Bad Request).
+- `exception/`: Manejo global de errores (`@ControllerAdvice`) para capturar excepciones y devolver JSONs estructurados
 - `repository/`: Interfaces de Spring Data JPA para la persistencia y consultas a PostgreSQL.
-- `service/`: Capa de lógica de negocio. Aquí residen las reglas estrictas (Ej: validación de stock por sede, cálculo de totales).
+- `service/`: Capa de lógica de negocio. Aquí residen las reglas estrictas (validación de stock por sede, cálculo de totales).
+- `security/`:
 
 ## 7. Estrategia de Seguridad Integral
 
@@ -183,7 +167,7 @@ Para garantizar entregas funcionales y testeables desde el primer día, el proye
 *   **[x] Fase 4: Corte Vertical 1 (Épica 1 - Vitrina Web).** Desarrollo acoplado de DTOs, Servicios y Controladores para la consulta pública del catálogo filtrado por Sede.
 *   **[x] Fase 5: Corte Vertical 2 (Épica 1 - Checkout).** Desarrollo del motor transaccional para la creación de Pedidos y Detalles de Pedido.
 *   **[ ] Fase 6: Seguridad y Autenticación.** Implementación de Spring Security, encriptación BCrypt y emisión de tokens JWT.
-*   **[ ] Fase 7: Corte Vertical 3 (Épica 2 - Panel Admin).** Endpoints protegidos para la gestión de inventario local (Stock, Disponibilidad, Precios).
+*   **[ ] Fase 7: Corte Vertical 3 (Épica 2 - Panel Admin).** Endpoints protegidos para la gestión de inventario local 
 *   **[ ] Fase 8: Corte Vertical 4 (Épica 3 - Superadmin).** Endpoints maestros para la creación de Productos Globales (Integración con ImageKit) y gestión de Sedes/Usuarios.
 *   **[ ] Fase 9: Frontend.** Desarrollo de la UI en Next.js + Tailwind, consumo de la API y lógica del Carrito/WhatsApp.
 *   **[ ] Fase 10: Despliegue (Producción).** Configuración del VPS, Docker Compose de producción, Nginx y despliegue en Vercel.
