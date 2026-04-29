@@ -29,7 +29,7 @@ public class CatalogoService {
                         .imagenUrl(inv.getProducto().getImagenUrl())
                         .categoriaNombre(inv.getProducto().getCategoria().getNombre())
                         // 2. Convertimos el Double de la entidad al BigDecimal del DTO
-                        .precio(BigDecimal.valueOf(inv.getPrecio()))
+                        .precio(inv.getPrecio())
                         .stock(inv.getStock())
                         .disponible(true)
                         .build())

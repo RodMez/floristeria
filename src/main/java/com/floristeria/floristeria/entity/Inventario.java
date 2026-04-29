@@ -1,5 +1,7 @@
 package com.floristeria.floristeria.entity;
 
+import java.math.BigDecimal;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,8 +29,8 @@ public class Inventario {
     private Sede sede;
     // ------------------------------
 
-    @Column(name = "precio", nullable = false)
-    private Double precio;
+    @Column(name = "precio", nullable = false, precision = 19, scale = 4)
+    private BigDecimal precio;
 
     @Column(name = "stock", nullable = false)
     private Integer stock;

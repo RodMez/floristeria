@@ -1,16 +1,17 @@
 package com.floristeria.floristeria.security;
 
-import com.floristeria.floristeria.entity.UsuarioAdmin;
-import com.floristeria.floristeria.repository.UsuarioAdminRepository;
-import lombok.RequiredArgsConstructor;
+import java.util.Collections;
+
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
+import com.floristeria.floristeria.entity.UsuarioAdmin;
+import com.floristeria.floristeria.repository.UsuarioAdminRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -23,10 +24,13 @@ public class CustomUserDetailsService implements UserDetailsService {
         UsuarioAdmin usuario = usuarioAdminRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con email: " + email));
 
-        return new User(
+        Integer sedeId = usuario.getSede() != null ? usuario.getSede().getId() : null;
+
+        return new UsuarioDetails(
                 usuario.getEmail(),
                 usuario.getPasswordHash(),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + usuario.getRol()))
-        );
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + usuario.getRol())),
+                sedeId,
+                usuario.getRol());
     }
 }

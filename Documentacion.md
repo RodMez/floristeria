@@ -110,13 +110,69 @@ Su responsabilidad única e inquebrantable será recibir las acciones que unific
 ![Modelo Entidad Relación](FloristeriaDB.png)
 
 ```dbml
-Table Sedes { id int [pk], nombre varchar, ciudad varchar, whatsapp varchar, email varchar }
-Table Categorias { id int [pk], nombre varchar}
-Table Productos { id int [pk], categoria_id int, nombre varchar, descripcion text, imagen_url varchar, activo_global boolean, creado_en timestamp }
-Table Inventario { id int [pk], producto_id int, sede_id int, precio decimal, stock int, disponible boolean } // TABLA PIVOTE CORE
-Table Pedidos { id int [pk], sede_id int, cliente_nombre varchar, cliente_telefono varchar, notas_entrega text, total decimal, estado varchar, creado_en timestamp }
-Table Detalles_Pedido { id int [pk], pedido_id int, producto_id int, cantidad int, precio_unitario decimal, nota_personalizacion varchar }
-Table Usuarios_Admin { id int[pk], sede_id int [null], nombre varcahar, email varchar, password_hash varchar, rol varchar }
+Table Sedes {
+  id int [pk, increment]
+  nombre varchar
+  ciudad varchar // Bogotá o Medellín
+  whatsapp varchar // A dónde llegará el mensaje
+  email varchar // A dónde llegará el mensaje
+}
+
+Table Categorias {
+  id int [pk, increment]
+  nombre varchar // Ej: Condolencias, Cumpleaños
+}
+
+Table Productos {
+  id int [pk, increment]
+  categoria_id int [ref: > Categorias.id]
+  nombre varchar
+  descripcion varchar(255)
+  imagen_url varchar
+  activo_global boolean [default: true] // Para ocultar el producto en TODAS las sedes de un golpe
+}
+
+Table Inventario {
+  id int [pk, increment]
+  producto_id int [ref: > Productos.id]
+  sede_id int [ref: > Sedes.id]
+  precio bigdecimal
+  stock int
+  disponible boolean [default: true]
+  // Una sola fila por producto+sede Evita que por error existan dos registros de 'rosas rojas' para Bogotá.
+  indexes {
+    (producto_id, sede_id) [unique]
+  }
+}
+
+Table Pedidos {
+  id int [pk, increment]
+  sede_id int [ref: > Sedes.id]
+  cliente_nombre varchar
+  cliente_telefono varchar
+  total bigdecimal
+  estado varchar [default: 'Pendiente'] // Pendiente, Completado, Cancelado
+  fecha timestamp [default: `now()`]
+}
+
+Table Detalles_Pedido {
+  id int [pk, increment]
+  pedido_id int [ref: > Pedidos.id]
+  producto_id int [ref: > Productos.id]
+  cantidad int
+  precio_unitario bigdecimal // Se guarda para el historial, por si el precio cambia en el futuro
+  nota_personalizacion varchar(255) //  "con dedicatoria", "sin moño", etc.
+}
+
+// -- ADMINISTRACIÓN --
+
+Table Usuarios_Admin {
+ id int [pk, increment]
+ sede_id int [ref: > Sedes.id, null] // null = super-admin
+ email varchar [unique]
+ password_hash varchar
+ rol varchar [default: 'admin'] // 'superadmin' | 'admin'
+}
 ```
 
 Para soportar la regla de negocio Multi-Sede sin duplicar información, la base de datos se ha normalizado separando el catálogo visual de la realidad física del inventario. A continuación, el propósito de cada entidad principal:
@@ -166,8 +222,8 @@ Para garantizar entregas funcionales y testeables desde el primer día, el proye
 *   **[x] Fase 3: Capa de Acceso (Repositorios).** Creación de interfaces Spring Data JPA con *Derived Queries* optimizadas para el aislamiento Multi-Tenant.
 *   **[x] Fase 4: Corte Vertical 1 (Épica 1 - Vitrina Web).** Desarrollo acoplado de DTOs, Servicios y Controladores para la consulta pública del catálogo filtrado por Sede.
 *   **[x] Fase 5: Corte Vertical 2 (Épica 1 - Checkout).** Desarrollo del motor transaccional para la creación de Pedidos y Detalles de Pedido.
-*   **[ ] Fase 6: Seguridad y Autenticación.** Implementación de Spring Security, encriptación BCrypt y emisión de tokens JWT.
-*   **[ ] Fase 7: Corte Vertical 3 (Épica 2 - Panel Admin).** Endpoints protegidos para la gestión de inventario local 
+*   **[x] Fase 6: Seguridad y Autenticación.** Implementación de Spring Security, encriptación BCrypt y emisión de tokens JWT.
+*   **[x] Fase 7: Corte Vertical 3 (Épica 2 - Panel Admin).** Endpoints protegidos para la gestión de inventario local 
 *   **[ ] Fase 8: Corte Vertical 4 (Épica 3 - Superadmin).** Endpoints maestros para la creación de Productos Globales (Integración con ImageKit) y gestión de Sedes/Usuarios.
 *   **[ ] Fase 9: Frontend.** Desarrollo de la UI en Next.js + Tailwind, consumo de la API y lógica del Carrito/WhatsApp.
 *   **[ ] Fase 10: Despliegue (Producción).** Configuración del VPS, Docker Compose de producción, Nginx y despliegue en Vercel.

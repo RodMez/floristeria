@@ -34,8 +34,6 @@ build/
 ### VS Code ###
 .vscode/
 .claude/
-ArquitecturaFloristeria.png
 CLAUDE.md
 FloristeriaDB.dbml
-FloristeriaDB.png
 /src/main/resources/application.yml
