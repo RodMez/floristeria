@@ -5,7 +5,8 @@ import lombok.*;
 
 @Entity
 @Table(name = "Productos")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

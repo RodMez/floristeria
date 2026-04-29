@@ -11,9 +11,14 @@ import java.util.Optional;
 public interface UsuarioAdminRepository extends JpaRepository<UsuarioAdmin, Integer> {
 
     /**
-     * Busca un usuario por nombre 
+     * Busca un usuario por nombre
      */
     Optional<UsuarioAdmin> findByNombre(String nombre);
+
+    /**
+     * Busca un usuario por email
+     */
+    Optional<UsuarioAdmin> findByEmail(String email);
 
     /**
      * Lista todos los usuarios administradores que pertenecen a un sede en específico.
