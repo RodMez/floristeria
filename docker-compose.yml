@@ -1,11 +1,42 @@
-version: '3.8'
 services:
   postgres-floristeria:
     image: postgres:16
     container_name: db_floristeria_local
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password123
-      POSTGRES_DB: floristeria_db
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - floristeria-network
+
+  backend-floristeria:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend_floristeria_local
+    depends_on:
+      postgres-floristeria:
+        condition: service_healthy
+    environment:
+      DB_URL: ${DB_URL}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      JWT_SECRET: ${JWT_SECRET}
+      IMAGEKIT_PRIVATE_KEY: ${IMAGEKIT_PRIVATE_KEY}
+      IMAGEKIT_PUBLIC_KEY: ${IMAGEKIT_PUBLIC_KEY}
+      IMAGEKIT_URL_ENDPOINT: ${IMAGEKIT_URL_ENDPOINT}
+    ports:
+      - "8080:8080"
+    networks:
+      - floristeria-network
+
+networks:
+  floristeria-network:
+    driver: bridge

@@ -22,7 +22,11 @@ spring:
 server:
   port: 8080
 
-
 jwt:
   secret: ${JWT_SECRET}
   expiration: 86400000
+
+imagekit:
+  private-key: ${IMAGEKIT_PRIVATE_KEY}
+  public-key: ${IMAGEKIT_PUBLIC_KEY}
+  url-endpoint: ${IMAGEKIT_URL_ENDPOINT}
