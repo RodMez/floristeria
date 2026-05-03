@@ -21,4 +21,9 @@ public interface PedidoRepository extends JpaRepository<Pedido, Integer> {
      */
     // CORREGIDO: Sede_Id
     List<Pedido> findBySede_IdAndEstado(Integer sedeId, String estado);
+
+    /**
+     * Lista todos los pedidos de una sede específica (sin ordenamiento especial).
+     */
+    List<Pedido> findBySede_Id(Integer sedeId);
 }

@@ -13,6 +13,9 @@ import com.floristeria.floristeria.service.InventarioService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -52,5 +55,19 @@ public class InventarioServiceImpl implements InventarioService {
                 .stock(inventarioActualizado.getStock())
                 .disponible(inventarioActualizado.getDisponible())
                 .build();
+    }
+
+    @Override
+    public List<InventarioResponseDTO> obtenerInventarioPorSede(Integer sedeId) {
+        return inventarioRepository.findBySede_Id(sedeId).stream()
+                .map(inventario -> InventarioResponseDTO.builder()
+                        .id(inventario.getId())
+                        .productoNombre(inventario.getProducto().getNombre())
+                        .sedeNombre(inventario.getSede().getNombre())
+                        .precio(inventario.getPrecio())
+                        .stock(inventario.getStock())
+                        .disponible(inventario.getDisponible())
+                        .build())
+                .collect(Collectors.toList());
     }
 }
