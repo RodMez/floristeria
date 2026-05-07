@@ -29,20 +29,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
+        System.out.println("--- INICIANDO FILTRO JWT PARA: " + request.getRequestURI() + " ---");
         final String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            System.out.println("Fallo: No hay cabecera Authorization o no empieza con Bearer.");
             filterChain.doFilter(request, response);
             return;
         }
 
         final String token = authHeader.substring(7);
         final String email = jwtService.extractUsername(token);
+        System.out.println("Email extraído del token: " + email);
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+            System.out.println("Usuario cargado de DB. Autoridades: " + userDetails.getAuthorities());
 
-            if (jwtService.isTokenValid(token, userDetails)) {
+            boolean isTokenValid = jwtService.isTokenValid(token, userDetails);
+            System.out.println("¿Es el token válido?: " + isTokenValid);
+
+            if (isTokenValid) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         null,
@@ -50,6 +57,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 );
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+                System.out.println("Autenticación exitosa. Contexto de seguridad establecido.");
+            } else {
+                System.out.println("Fallo: El token no es válido o ha expirado.");
             }
         }
 

@@ -224,6 +224,6 @@ Para garantizar entregas funcionales y testeables desde el primer día, el proye
 *   **[x] Fase 5: Corte Vertical 2 (Épica 1 - Checkout).** Desarrollo del motor transaccional para la creación de Pedidos y Detalles de Pedido.
 *   **[x] Fase 6: Seguridad y Autenticación.** Implementación de Spring Security, encriptación BCrypt y emisión de tokens JWT.
 *   **[x] Fase 7: Corte Vertical 3 (Épica 2 - Panel Admin).** Endpoints protegidos para la gestión de inventario local 
-*   **[ ] Fase 8: Corte Vertical 4 (Épica 3 - Superadmin).** Endpoints maestros para la creación de Productos Globales (Integración con ImageKit) y gestión de Sedes/Usuarios.
+*   **[x] Fase 8: Corte Vertical 4 (Épica 3 - Superadmin).** Endpoints maestros para la creación de Productos Globales (Integración con ImageKit) y gestión de Sedes/Usuarios.
 *   **[ ] Fase 9: Frontend.** Desarrollo de la UI en Next.js + Tailwind, consumo de la API y lógica del Carrito/WhatsApp.
 *   **[ ] Fase 10: Despliegue (Producción).** Configuración del VPS, Docker Compose de producción, Nginx y despliegue en Vercel.

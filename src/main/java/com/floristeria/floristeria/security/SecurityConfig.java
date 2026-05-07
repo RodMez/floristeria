@@ -31,7 +31,13 @@ public class SecurityConfig {
             .cors(Customizer.withDefaults())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/api/auth/**", "/api/v1/catalogo/**", "/api/productos/**", "/api/sedes/**", "/api/categorias/**", "/api/pedidos/**").permitAll()
+                // 1. Rutas Públicas
+                .requestMatchers("/api/auth/**", "/api/v1/**").permitAll()
+                // 2. Rutas exclusivas del Superadmin
+                .requestMatchers("/api/superadmin/**").hasAuthority("SUPERADMIN")
+                // 3. Rutas de los Administradores de Sede (El superadmin también puede verlas si lo desea)
+                .requestMatchers("/api/admin/**").hasAnyAuthority("ADMIN", "SUPERADMIN")
+                // 4. Cualquier otra ruta requiere autenticación
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

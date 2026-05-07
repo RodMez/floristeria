@@ -1,5 +1,7 @@
 package com.floristeria.floristeria.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -33,5 +35,12 @@ public class Producto {
     private Boolean activoGlobal;
 
     @Column(name = "creado_en", nullable = false)
-    private String creadoEn;
+    private LocalDateTime creadoEn;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.creadoEn == null) {
+            this.creadoEn = LocalDateTime.now();
+        }
+    }
 }
