@@ -13,4 +13,6 @@ import lombok.Setter;
 @Builder
 public class AuthResponseDTO {
     private String token;
+    private String rol;
+    private Integer sedeId;
 }

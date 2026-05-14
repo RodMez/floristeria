@@ -93,7 +93,7 @@ Su responsabilidad única e inquebrantable será recibir las acciones que unific
 
 | Capa Tecnológica                     | Tecnología Usada | Descripción del Componente dentro de la Aplicación                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | :----------------------------------- | :--------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Content Network Media (Imágenes)** | **ImageKit.io**  | Nuestra librería paralela externa al VPS vía SDK Java . Al subir administrador su nuevo Producto foto, "Spring" desvía inmediatamente dicha fotografía enviando su tamaño enorme (MB) a la pasarela (Cloud Mágic/ImageKit) recibiendo su propia ruta generada url de `https/IMGKIT.url/`. A continuación su principal punto a Next js (FRONT), la mostrará autogenerándose comprimida e invisible unificándolo con WebP/Next a <~40 KB>!. Sin destruir servidor Base en peticiones recurrentes al móvil y velocidad del comprador al máximo sin colapsos |
+| **Content Network Media (Imágenes)** | **ImageKit.io**  | Se implementó un flujo desacoplado de 2 pasos para evitar sobrecargar el servidor con peticiones `multipart` mixtas:1. El Frontend envía solo el archivo físico al endpoint `/api/superadmin/imagenes`. El Backend lo sube a ImageKit y retorna la URL pública.2. El Frontend toma esa URL y la envía como texto plano dentro del JSON al crear el producto en api/superadmin/productos`. |
 
 ### 4.4 Infraestructura de Despliegue en Máquina e IPS "On Cloud"
 
@@ -101,7 +101,7 @@ Su responsabilidad única e inquebrantable será recibir las acciones que unific
 | :------------------------------------------- | :------------------------------------------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Gestión Virtual "Host-Machine"**           | **VPS / Sistema Linux-Ubuntu Server.**                  | Servidor físico fraccionado (Señalaremos máquinas muy estables Contabo/Hetzner para su control de gasto <10 USD al mes ).                                                                                                                                                                                                                                                                                                                                                                 |
 | **Control Aislamiento (Containers)**         | **DOCKER (Y Compose)**                                  | Genera su bloque (1 Bloque por Spring Boot Image), ( 1 Contenedor "Virtual Postgres aislándolo") que interconecta sobre variables `environment/red virtual bridge`. No rompes todo a un fallo ajeno. Migraciones garantizada instalando docker de PC A / C al toque!                                                                                                                                                                                                                      |
-| **Security - Puerta de Acceso Reverso Web:** | **N G I N X (+ SSL CERTBOT Lets.Crypts/Proxy manager)** | Instanciando y escuchando la salida en los puertos "Web (80 / 443 HTTPS )". NGINX atiende solo clientes (bloqueando ataques Bots comunes en la calle). Provee al mismo tiempo ese "Candado verde gratuito SSL web," interceptándolo antes que impacte todo pasando limpio solo "A La petición local interna escondida a Contenedores Java". Él permite crear también la habilitación o Permiso del origen externo a nuestras `C.O.R.S Header Origin de Vercel/Web` del sitio front web 1. |
+| **Security - Puerta de Acceso Reverso Web:** | **N G I N X (+ SSL CERTBOT Lets.Crypts/Proxy manager)** | Instanciando y escuchando la salida en los puertos "Web (80 / 443 HTTPS )". NGINX atiende solo clientes (bloqueando ataques Bots comunes). Provee al mismo tiempo ese "Candado verde gratuito SSL web," interceptándolo antes que impacte, pasando limpio solo "A La petición local interna escondida a Contenedores Java". Él permite crear también la habilitación o Permiso del origen externo a nuestras `C.O.R.S Header Origin de Vercel/Web` del sitio front web 1. |
 
 ---
 
@@ -207,6 +207,9 @@ La seguridad del sistema se abordará bajo un enfoque de "Defensa en Profundidad
 - **Cifrado de Credenciales:** Uso del algoritmo **BCrypt** para el hasheo de contraseñas en la base de datos.
 - **Protección CORS:** Configuración estricta para aceptar únicamente peticiones provenientes del dominio oficial del Frontend (Vercel).
 - **Validación de Datos:** Uso de `spring-boot-starter-validation` para sanitizar y validar los DTOs entrantes.
+- **Aislamiento Multi-Tenant Estricto:** Los controladores del Administrador (`/api/admin/**`) no reciben el ID de la sede por URL ni por Body. El `sedeId` se extrae directamente del `SecurityContext` (inyectado por el filtro JWT), garantizando que un empleado jamás pueda mutar datos de otra ciudad.
+- **Centralización RBAC:** El control de acceso está centralizado en `SecurityConfig` usando `.hasAuthority()`, evitando vulnerabilidades por olvido de anotaciones en los controladores.
+- **Auditoría Automática:** Uso de `@PrePersist` en entidades JPA para garantizar la integridad de fechas (`creado_en`) a nivel de base de datos, evitando errores de restricciones `NOT NULL`.
 
 ### 7.2 Seguridad a Nivel de Infraestructura (DevOps)
 
@@ -214,7 +217,7 @@ La seguridad del sistema se abordará bajo un enfoque de "Defensa en Profundidad
 - **Gestión de Secretos:** Prohibición estricta de credenciales "quemadas" (hardcoded) en el código. Uso exclusivo de Variables de Entorno (`.env`) inyectadas en el `application.yml`.
 - **Cifrado en Tránsito:** Implementación de Proxy Reverso (Nginx) con certificados SSL/TLS (Let's Encrypt) para forzar tráfico HTTPS.
 
-## 8. Hoja de Ruta de Desarrollo (Roadmap Actualizado)
+## 8. Hoja de Ruta de Desarrollo (Roadmap)
 Para garantizar entregas funcionales y testeables desde el primer día, el proyecto abandonó el desarrollo tradicional por capas horizontales y adoptó un enfoque de **Vertical Slicing (Desarrollo Orientado a Funcionalidades)** a partir de la Fase 4.
 
 *   **[x] Fase 1: Setup Base.** Configuración de dependencias (POM), conexión a PostgreSQL local vía Docker y `application.yml`.
@@ -225,5 +228,31 @@ Para garantizar entregas funcionales y testeables desde el primer día, el proye
 *   **[x] Fase 6: Seguridad y Autenticación.** Implementación de Spring Security, encriptación BCrypt y emisión de tokens JWT.
 *   **[x] Fase 7: Corte Vertical 3 (Épica 2 - Panel Admin).** Endpoints protegidos para la gestión de inventario local 
 *   **[x] Fase 8: Corte Vertical 4 (Épica 3 - Superadmin).** Endpoints maestros para la creación de Productos Globales (Integración con ImageKit) y gestión de Sedes/Usuarios.
-*   **[ ] Fase 9: Frontend.** Desarrollo de la UI en Next.js + Tailwind, consumo de la API y lógica del Carrito/WhatsApp.
-*   **[ ] Fase 10: Despliegue (Producción).** Configuración del VPS, Docker Compose de producción, Nginx y despliegue en Vercel.
+
+## 9. Arquitectura Frontend (Next.js)
+
+El Frontend está diseñado para maximizar el SEO público, minimizar los costos de servidor y ofrecer una experiencia de administración en tiempo real.
+
+### 9.1 Estrategia de Renderizado (App Router)
+- **Server-Side Rendering (SSR):** Utilizado en la Vitrina Pública (`/[sede]/catalogo`). Next.js hace el fetching directamente al Backend en el servidor de Vercel, entregando HTML pre-renderizado para un SEO perfecto y carga instantánea.
+- **Client-Side Rendering (CSR):** Utilizado estrictamente para interactividad (Botones de carrito, modales) y para los Paneles de Administración (`/admin`), donde el SEO no es relevante pero la reactividad y la seguridad (JWT) son críticas.
+
+### 9.2 Manejo de Estado y Fetching
+- **Estado Global (Zustand):** Se utiliza Zustand para el Carrito de Compras y la Autenticación. Es más ligero y rápido que Context API, evitando re-renderizados innecesarios.
+- **Fetching Público:** `fetch` nativo de Next.js en Server Components.
+- **Fetching Privado (Admin):** `SWR` (State-While-Revalidate) para las tablas de inventario y pedidos. Permite mutaciones optimistas y actualización en tiempo real sin recargar la página.
+
+### 9.3 Sistema de UI
+- **Tailwind CSS:** Para el estilado base y diseño responsivo (Mobile-first).
+- **shadcn/ui:** Colección de componentes headless integrados directamente en el código fuente. Se utiliza para construir rápidamente modales, tablas, formularios y menús accesibles en el panel de administración sin reinventar la rueda.
+
+### Hoja de Ruta de Desarrollo (Roadmap)
+
+*   **[ ] Fase 9: Frontend - Slice 1 (Setup & Core UI).** Inicializar Next.js, Tailwind, shadcn/ui, Zustand y Layout principal.
+*   **[ ] Fase 9: Frontend - Slice 2 (Vitrina Pública).** Selector de Sede, fetching SSR de productos y catálogo.
+*   **[ ] Fase 9: Frontend - Slice 3 (Carrito & Checkout).** Lógica Zustand, Drawer del carrito y enlace a WhatsApp.
+*   **[ ] Fase 9: Frontend - Slice 4 (Auth & Seguridad).** Login, JWT en cookies, Middleware y Layout Admin.
+*   **[ ] Fase 9: Frontend - Slice 5 (Admin Sede).** Tabla de inventario local (SWR), mutaciones de precio/stock y vista de pedidos.
+*   **[ ] Fase 9: Frontend - Slice 6 (Superadmin).** Formulario maestro de productos, subida a ImageKit y gestión de usuarios/sedes.
+
+## 10: Despliegue (Producción).** Configuración del VPS, Docker Compose de producción, Nginx y despliegue en Vercel.

@@ -34,6 +34,10 @@ public class AuthController {
 
         String token = jwtService.generateToken(usuario);
 
-        return ResponseEntity.ok(new AuthResponseDTO(token));
+        return ResponseEntity.ok(AuthResponseDTO.builder()
+                .token(token)
+                .rol(usuario.getRol())
+                .sedeId(usuario.getSede() != null ? usuario.getSede().getId() : null)
+                .build());
     }
 }
