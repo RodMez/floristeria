@@ -16,6 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -84,5 +87,28 @@ public class PedidoServiceImpl implements PedidoService {
                     return dto;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    @Override
+    public PedidoAdminResponseDTO actualizarEstadoPedido(Integer pedidoId, String nuevoEstado, Integer usuarioSedeId, String rol) {
+        Pedido pedido = pedidoRepository.findById(pedidoId)
+                .orElseThrow(() -> new EntityNotFoundException("Pedido no encontrado"));
+
+        if (!"SUPERADMIN".equals(rol) && !pedido.getSede().getId().equals(usuarioSedeId)) {
+            throw new AccessDeniedException("No tiene permisos sobre este pedido");
+        }
+
+        pedido.setEstado(nuevoEstado);
+        pedidoRepository.save(pedido);
+
+        PedidoAdminResponseDTO dto = new PedidoAdminResponseDTO();
+        dto.setId(pedido.getId());
+        dto.setClienteNombre(pedido.getClienteNombre());
+        dto.setClienteTelefono(pedido.getClienteTelefono());
+        dto.setTotal(pedido.getTotal());
+        dto.setEstado(pedido.getEstado());
+        dto.setCreadoEn(pedido.getCreadoEn());
+        return dto;
     }
 }

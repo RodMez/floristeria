@@ -10,4 +10,6 @@ public interface PedidoService {
     Integer crearPedido(PedidoRequestDTO request);
 
     List<PedidoAdminResponseDTO> obtenerPedidosPorSede(Integer sedeId);
+
+    PedidoAdminResponseDTO actualizarEstadoPedido(Integer pedidoId, String nuevoEstado, Integer usuarioSedeId, String rol);
 }
