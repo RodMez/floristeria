@@ -59,7 +59,11 @@ public class InventarioServiceImpl implements InventarioService {
 
     @Override
     public List<InventarioResponseDTO> obtenerInventarioPorSede(Integer sedeId) {
-        return inventarioRepository.findBySede_Id(sedeId).stream()
+        List<Inventario> inventarios = (sedeId == null)
+                ? inventarioRepository.findAll()
+                : inventarioRepository.findBySede_Id(sedeId);
+
+        return inventarios.stream()
                 .map(inventario -> InventarioResponseDTO.builder()
                         .id(inventario.getId())
                         .productoNombre(inventario.getProducto().getNombre())

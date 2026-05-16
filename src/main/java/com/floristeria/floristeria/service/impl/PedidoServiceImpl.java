@@ -75,7 +75,11 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Override
     public List<PedidoAdminResponseDTO> obtenerPedidosPorSede(Integer sedeId) {
-        return pedidoRepository.findBySede_Id(sedeId).stream()
+        List<Pedido> pedidos = (sedeId == null)
+                ? pedidoRepository.findAll()
+                : pedidoRepository.findBySede_Id(sedeId);
+
+        return pedidos.stream()
                 .map(pedido -> {
                     PedidoAdminResponseDTO dto = new PedidoAdminResponseDTO();
                     dto.setId(pedido.getId());
