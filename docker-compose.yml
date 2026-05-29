@@ -1,18 +1,24 @@
 services:
   postgres-floristeria:
     image: postgres:16
-    container_name: db_floristeria_local
+    container_name: db_floristeria_prod
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
-    ports:
-      - "${DB_PORT}:5432"
+    #La BD es 100% privada en la red interna.
+    volumes:
+      - pgdata:/var/lib/postgresql/data # Persistencia de datos.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 5
+    logging: #  Control de logs
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - floristeria-network
 
@@ -20,22 +26,30 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: backend_floristeria_local
+    container_name: backend_floristeria_prod
     depends_on:
       postgres-floristeria:
         condition: service_healthy
     environment:
-      DB_URL: ${DB_URL}
+      # Spring Boot debe apuntar al nombre del contenedor de la BD
+      DB_URL: jdbc:postgresql://postgres-floristeria:5432/${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASS}
       JWT_SECRET: ${JWT_SECRET}
       IMAGEKIT_PRIVATE_KEY: ${IMAGEKIT_PRIVATE_KEY}
       IMAGEKIT_PUBLIC_KEY: ${IMAGEKIT_PUBLIC_KEY}
       IMAGEKIT_URL_ENDPOINT: ${IMAGEKIT_URL_ENDPOINT}
-    ports:
-      - "8080:8080"
+    # ELIMINADO: ports. Coolify/Traefik enrutará el tráfico al puerto 8080 internamente.
+    logging: # AÑADIDO: Control de logs (Punto 4)
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - floristeria-network
+
+volumes:
+  pgdata: # Declaración obligatoria del volumen
 
 networks:
   floristeria-network:
