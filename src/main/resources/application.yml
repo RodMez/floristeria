@@ -30,3 +30,8 @@ imagekit:
   private-key: ${IMAGEKIT_PRIVATE_KEY}
   public-key: ${IMAGEKIT_PUBLIC_KEY}
   url-endpoint: ${IMAGEKIT_URL_ENDPOINT}
+
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}

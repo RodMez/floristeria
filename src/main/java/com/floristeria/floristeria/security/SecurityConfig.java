@@ -1,5 +1,6 @@
-package com.floristeria.floristeria.security;
+package com.floristeria.floristeria.security; 
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,7 +19,9 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import lombok.RequiredArgsConstructor;
+
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -27,6 +30,9 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomUserDetailsService customUserDetailsService;
+
+    @Value("${app.cors.allowed-origins}")
+    private List<String> allowedOrigins;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -39,8 +45,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/api/v1/**").permitAll()
                         // 2. Rutas exclusivas del Superadmin
                         .requestMatchers("/api/superadmin/**").hasAuthority("SUPERADMIN")
-                        // 3. Rutas de los Administradores de Sede (el superadmin también puede verlas si lo
-                        // desea)
+                        // 3. Rutas de los Administradores de Sede
                         .requestMatchers("/api/admin/**").hasAnyAuthority("ADMIN", "SUPERADMIN")
                         // 4. Cualquier otra ruta requiere autenticación
                         .anyRequest().authenticated()
@@ -70,10 +75,14 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+        
+        // USAMOS OriginPatterns PARA SOPORTAR EL ASTERISCO (*) DE VERCEL
+        configuration.setAllowedOriginPatterns(allowedOrigins);
+        
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
+        
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
