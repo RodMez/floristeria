@@ -1,13 +1,8 @@
 package com.floristeria.floristeria.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 import com.floristeria.floristeria.dto.InventarioResponseDTO;
 import com.floristeria.floristeria.dto.InventarioUpdateRequestDTO;
@@ -27,8 +22,8 @@ public class InventarioAdminController {
     private final InventarioService inventarioService;
 
     @GetMapping
-    public ResponseEntity<List<InventarioResponseDTO>> obtenerInventario(Authentication authentication) {
-        UsuarioDetails usuario = (UsuarioDetails) authentication.getPrincipal();
+    public ResponseEntity<List<InventarioResponseDTO>> obtenerInventario(
+            @AuthenticationPrincipal UsuarioDetails usuario) {
         List<InventarioResponseDTO> inventario = inventarioService.obtenerInventarioPorSede(usuario.getSedeId());
         return ResponseEntity.ok(inventario);
     }
@@ -37,13 +32,10 @@ public class InventarioAdminController {
     public ResponseEntity<InventarioResponseDTO> actualizarInventario(
             @PathVariable Integer id,
             @Valid @RequestBody InventarioUpdateRequestDTO request,
-            Authentication authentication) {
+            @AuthenticationPrincipal UsuarioDetails usuario) {
 
-        UsuarioDetails usuarioDetails = (UsuarioDetails) authentication.getPrincipal();
-        String rol = usuarioDetails.getRol();
-        Integer sedeId = usuarioDetails.getSedeId();
-
-        InventarioResponseDTO response = inventarioService.actualizarInventarioLocal(id, request, sedeId, rol);
+        InventarioResponseDTO response = inventarioService.actualizarInventarioLocal(
+                id, request, usuario.getSedeId(), usuario.getRol());
         return ResponseEntity.ok(response);
     }
 }
