@@ -2,7 +2,11 @@ package com.floristeria.floristeria.service.impl;
 
 import com.floristeria.floristeria.dto.SedeRequestDTO;
 import com.floristeria.floristeria.dto.SedeResponseDTO;
+import com.floristeria.floristeria.entity.Inventario;
+import com.floristeria.floristeria.entity.Producto;
 import com.floristeria.floristeria.entity.Sede;
+import com.floristeria.floristeria.repository.InventarioRepository;
+import com.floristeria.floristeria.repository.ProductoRepository;
 import com.floristeria.floristeria.repository.SedeRepository;
 import com.floristeria.floristeria.service.SedeService;
 
@@ -21,6 +25,8 @@ import java.util.stream.Collectors;
 public class SedeServiceImpl implements SedeService {
 
     private final SedeRepository sedeRepository;
+    private final ProductoRepository productoRepository;
+    private final InventarioRepository inventarioRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -32,12 +38,29 @@ public class SedeServiceImpl implements SedeService {
 
     @Override
     public SedeResponseDTO crearSede(SedeRequestDTO requestDTO) {
+        // 1. Crear y guardar la nueva sede
         Sede sede = new Sede();
         sede.setNombre(requestDTO.getNombre());
         sede.setCiudad(requestDTO.getCiudad());
         sede.setWhatsapp(requestDTO.getTelefonoWhatsapp());
 
         Sede sedeGuardada = sedeRepository.save(sede);
+
+        // 2. Sincronizar inventario: crear registros para todos los productos existentes
+        List<Producto> todosProductos = productoRepository.findAll();
+
+        List<Inventario> inventarios = todosProductos.stream()
+                .map(producto -> Inventario.builder()
+                        .sede(sedeGuardada)
+                        .producto(producto)
+                        .stock(0)
+                        .precio(java.math.BigDecimal.ZERO)
+                        .disponible(Boolean.FALSE)
+                        .build())
+                .collect(Collectors.toList());
+
+        inventarioRepository.saveAll(inventarios);
+
         return toResponseDTO(sedeGuardada);
     }
 
