@@ -1,4 +1,6 @@
 .env
+.env.local
+docker-compose.override.yml
 
 HELP.md
 target/
@@ -37,3 +39,5 @@ build/
 
 FloristeriaDB.dbml
 /src/main/resources/application.yml
+/src/main/resources/application-local.yml
+.gitignore

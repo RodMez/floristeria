@@ -1,36 +1,31 @@
 spring:
   application:
     name: floristeria
-
   datasource:
     url: ${DB_URL}
     username: ${DB_USER}
     password: ${DB_PASS}
     driver-class-name: org.postgresql.Driver
-
   jpa:
     hibernate:
       ddl-auto: update
-
     show-sql: true
-
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        # ELIMINAR la línea del dialect explícito — Hibernate 7 lo detecta solo
 
 server:
   port: 8080
 
 jwt:
   secret: ${JWT_SECRET}
-  expiration: 3600000
+  expiration: 36000000
 
 imagekit:
   private-key: ${IMAGEKIT_PRIVATE_KEY}
   public-key: ${IMAGEKIT_PUBLIC_KEY}
   url-endpoint: ${IMAGEKIT_URL_ENDPOINT}
-
 
 app:
   cors:
