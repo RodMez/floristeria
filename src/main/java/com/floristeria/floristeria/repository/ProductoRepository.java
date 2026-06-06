@@ -23,8 +23,7 @@ public interface ProductoRepository extends JpaRepository<Producto, Integer> {
     /**
      * Busca productos activos globalmente por categoría.
      */
-    // CORREGIDO: Categoria_Id
-    List<Producto> findByActivoGlobalTrueAndCategoria_Id(Integer categoriaId);
+    List<Producto> findByActivoGlobalTrueAndCategorias_Id(Integer categoriaId);
 
     /**
      * Verifica si existe un producto con el nombre especificado.
