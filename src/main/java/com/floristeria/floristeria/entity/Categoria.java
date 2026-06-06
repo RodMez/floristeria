@@ -1,5 +1,8 @@
 package com.floristeria.floristeria.entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,4 +21,8 @@ public class Categoria {
 
     @Column(name = "nombre", nullable = false)
     private String nombre;
+
+    @Builder.Default
+    @ManyToMany(mappedBy = "categorias", fetch = FetchType.LAZY)
+    private List<Producto> productos = new ArrayList<>();
 }
