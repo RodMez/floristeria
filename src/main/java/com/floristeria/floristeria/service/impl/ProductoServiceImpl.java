@@ -46,17 +46,19 @@ public class ProductoServiceImpl implements ProductoService {
     @Override
     @Transactional
     public ProductoResponseDTO crearProducto(ProductoRequestDTO request) {
-        // 1. Buscar la categoría
-        Categoria categoria = categoriaRepository.findById(request.getCategoriaId())
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Categoría no encontrada con id: " + request.getCategoriaId()));
+        // 1. Buscar todas las categorías por sus IDs
+        List<Categoria> categorias = categoriaRepository.findAllById(request.getCategoriaIds());
+
+        if (categorias.size() != request.getCategoriaIds().size()) {
+            throw new EntityNotFoundException("Una o más categorías no encontradas");
+        }
 
         // 2. Crear y guardar el Producto Maestro
         Producto producto = new Producto();
         producto.setNombre(request.getNombre());
         producto.setDescripcion(request.getDescripcion());
         producto.setImagenUrl(request.getImagenUrl());
-        producto.setCategoria(categoria);
+        producto.setCategorias(categorias);
         producto.setActivoGlobal(true);
 
         Producto guardado = productoRepository.save(producto);
@@ -72,7 +74,7 @@ public class ProductoServiceImpl implements ProductoService {
             inventario.setPrecio(BigDecimal.ZERO); // Precio inicial 0
             inventario.setStock(0);                // Stock inicial 0
             inventario.setDisponible(false);       // Apagado por defecto para que el Admin local lo encienda
-            
+
             nuevosInventarios.add(inventario);
         }
 
@@ -87,14 +89,16 @@ public class ProductoServiceImpl implements ProductoService {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado con id: " + id));
 
-        Categoria categoria = categoriaRepository.findById(request.getCategoriaId())
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Categoría no encontrada con id: " + request.getCategoriaId()));
+        List<Categoria> categorias = categoriaRepository.findAllById(request.getCategoriaIds());
+
+        if (categorias.size() != request.getCategoriaIds().size()) {
+            throw new EntityNotFoundException("Una o más categorías no encontradas");
+        }
 
         producto.setNombre(request.getNombre());
         producto.setDescripcion(request.getDescripcion());
         producto.setImagenUrl(request.getImagenUrl());
-        producto.setCategoria(categoria);
+        producto.setCategorias(categorias);
 
         Producto guardado = productoRepository.save(producto);
         return toResponseDTO(guardado);
@@ -109,13 +113,19 @@ public class ProductoServiceImpl implements ProductoService {
     }
 
     private ProductoResponseDTO toResponseDTO(Producto producto) {
+        List<ProductoResponseDTO.CategoriaInfo> categoriaInfos = producto.getCategorias().stream()
+                .map(cat -> ProductoResponseDTO.CategoriaInfo.builder()
+                        .id(cat.getId())
+                        .nombre(cat.getNombre())
+                        .build())
+                .collect(Collectors.toList());
+
         return ProductoResponseDTO.builder()
                 .id(producto.getId())
                 .nombre(producto.getNombre())
                 .descripcion(producto.getDescripcion())
                 .imagenUrl(producto.getImagenUrl())
-                .categoriaId(producto.getCategoria().getId())
-                .categoriaNombre(producto.getCategoria().getNombre())
+                .categorias(categoriaInfos)
                 .build();
     }
 }
