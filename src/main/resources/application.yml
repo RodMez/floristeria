@@ -13,7 +13,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        # ELIMINAR la línea del dialect explícito — Hibernate 7 lo detecta solo
 
 server:
   port: 8080
