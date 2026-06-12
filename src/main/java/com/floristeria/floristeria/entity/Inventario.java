@@ -1,12 +1,15 @@
 package com.floristeria.floristeria.entity;
 
-import java.math.BigDecimal;
-
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "Inventario")
+@SQLRestriction("deleted_at IS NULL")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,8 +21,6 @@ public class Inventario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    // --- AQUÍ ESTÁ LA MAGIA JPA ---
-    // En lugar de un Integer, mapeamos la entidad completa
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "producto_id", nullable = false)
     private Producto producto;
@@ -27,7 +28,6 @@ public class Inventario {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sede_id", nullable = false)
     private Sede sede;
-    // ------------------------------
 
     @Column(name = "precio", nullable = false, precision = 19, scale = 4)
     private BigDecimal precio;
@@ -37,4 +37,7 @@ public class Inventario {
 
     @Column(name = "disponible", nullable = false)
     private Boolean disponible;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }

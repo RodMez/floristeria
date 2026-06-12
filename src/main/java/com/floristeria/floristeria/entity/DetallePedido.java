@@ -1,14 +1,15 @@
 package com.floristeria.floristeria.entity;
 
-import java.math.BigDecimal;
-
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 
-//import java.math.BigDecimal;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "Detalles_Pedido")
+@SQLRestriction("deleted_at IS NULL")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -31,9 +32,12 @@ public class DetallePedido {
     @Column(name = "cantidad", nullable = false)
     private Integer cantidad;
 
-    @Column(name = "precio_unitario", nullable = false)
+    @Column(name = "precio_unitario", nullable = false, precision = 19, scale = 4)
     private BigDecimal precioUnitario;
 
     @Column(name = "nota_personalizacion")
     private String notaPersonalizacion;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }

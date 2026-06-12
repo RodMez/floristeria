@@ -1,13 +1,16 @@
 package com.floristeria.floristeria.entity;
 
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.*;
-import lombok.*;
-
 @Entity
 @Table(name = "Categorias")
+@SQLRestriction("deleted_at IS NULL")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -25,4 +28,7 @@ public class Categoria {
     @Builder.Default
     @ManyToMany(mappedBy = "categorias", fetch = FetchType.LAZY)
     private List<Producto> productos = new ArrayList<>();
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }

@@ -2,9 +2,13 @@ package com.floristeria.floristeria.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "Sedes")
+@SQLRestriction("deleted_at IS NULL")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -27,4 +31,7 @@ public class Sede {
 
     @Column(name = "email")
     private String email;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }
