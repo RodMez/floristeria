@@ -1,6 +1,7 @@
 package com.floristeria.floristeria.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import com.floristeria.floristeria.entity.EstadoPedido;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,6 +9,6 @@ import lombok.Setter;
 @Setter
 public class PedidoEstadoUpdateRequestDTO {
 
-    @NotBlank(message = "El estado no puede estar vacío")
-    private String estado;
+    @NotNull(message = "El estado no puede estar vacío")
+    private EstadoPedido estado;
 }

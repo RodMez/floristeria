@@ -13,8 +13,8 @@ import java.util.List;
 @AllArgsConstructor
 public class PedidoRequestDTO {
     private Integer sedeId;
-    private String clienteNombre;
-    private String clienteTelefono;
+    private Integer clienteId;
+    private Integer direccionId;
     private String notasEntrega;
     private List<DetallePedidoRequestDTO> detalles;
 }
