@@ -2,14 +2,15 @@ package com.floristeria.floristeria.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.math.BigDecimal;
-//import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Table(name = "Pedidos")
+@SQLRestriction("deleted_at IS NULL")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -25,20 +26,26 @@ public class Pedido {
     @JoinColumn(name = "sede_id", nullable = false)
     private Sede sede;
 
-    @Column(name = "cliente_nombre", nullable = false)
-    private String clienteNombre;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cliente_id", nullable = false)
+    private Cliente cliente;
 
-    @Column(name = "cliente_telefono", nullable = false)
-    private String clienteTelefono;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "direccion_id", nullable = false)
+    private Direccion direccion;
 
     @Column(name = "notas_entrega")
     private String notasEntrega;
 
-    @Column(name = "total", nullable = false)
+    @Column(name = "total", nullable = false, precision = 19, scale = 4)
     private BigDecimal total;
 
-    @Column(name = "estado")
-    private String estado;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado", nullable = false)
+    private EstadoPedido estado;
+
+    @Column(name = "transaccion_id")
+    private String transaccionId;
 
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetallePedido> detalles;
@@ -46,10 +53,16 @@ public class Pedido {
     @Column(name = "creado_en", nullable = false)
     private LocalDateTime creadoEn;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @PrePersist
     protected void onCreate() {
         if (this.creadoEn == null) {
             this.creadoEn = LocalDateTime.now();
+        }
+        if (this.estado == null) {
+            this.estado = EstadoPedido.PENDIENTE_PAGO;
         }
     }
 }
