@@ -6,9 +6,11 @@ import java.util.List;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "Productos")
+@SQLRestriction("deleted_at IS NULL")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -41,6 +43,9 @@ public class Producto {
 
     @Column(name = "creado_en", nullable = false)
     private LocalDateTime creadoEn;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @PrePersist
     protected void onCreate() {

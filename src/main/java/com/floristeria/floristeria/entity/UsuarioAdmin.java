@@ -2,9 +2,13 @@ package com.floristeria.floristeria.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "Usuarios_Admin")
+@SQLRestriction("deleted_at IS NULL")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -15,7 +19,7 @@ public class UsuarioAdmin {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    
+
     @Column(name = "nombre", nullable = false)
     private String nombre;
 
@@ -31,4 +35,7 @@ public class UsuarioAdmin {
 
     @Column(name = "rol", nullable = false)
     private String rol;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }
