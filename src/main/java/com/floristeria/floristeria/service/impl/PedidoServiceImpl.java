@@ -3,14 +3,8 @@ package com.floristeria.floristeria.service.impl;
 import com.floristeria.floristeria.dto.DetallePedidoRequestDTO;
 import com.floristeria.floristeria.dto.PedidoAdminResponseDTO;
 import com.floristeria.floristeria.dto.PedidoRequestDTO;
-import com.floristeria.floristeria.entity.DetallePedido;
-import com.floristeria.floristeria.entity.Pedido;
-import com.floristeria.floristeria.entity.Producto;
-import com.floristeria.floristeria.entity.Sede;
-import com.floristeria.floristeria.repository.DetallePedidoRepository;
-import com.floristeria.floristeria.repository.PedidoRepository;
-import com.floristeria.floristeria.repository.ProductoRepository;
-import com.floristeria.floristeria.repository.SedeRepository;
+import com.floristeria.floristeria.entity.*;
+import com.floristeria.floristeria.repository.*;
 import com.floristeria.floristeria.service.PedidoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,7 +14,6 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.access.AccessDeniedException;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,12 +25,20 @@ public class PedidoServiceImpl implements PedidoService {
     private final DetallePedidoRepository detallePedidoRepository;
     private final SedeRepository sedeRepository;
     private final ProductoRepository productoRepository;
+    private final ClienteRepository clienteRepository;
+    private final DireccionRepository direccionRepository;
 
     @Transactional
     @Override
     public Integer crearPedido(PedidoRequestDTO request) {
         Sede sede = sedeRepository.findById(request.getSedeId())
-                .orElseThrow(() -> new IllegalArgumentException("Sede no encontrada"));
+                .orElseThrow(() -> new EntityNotFoundException("Sede no encontrada"));
+
+        Cliente cliente = clienteRepository.findById(request.getClienteId())
+                .orElseThrow(() -> new EntityNotFoundException("Cliente no encontrado"));
+
+        Direccion direccion = direccionRepository.findById(request.getDireccionId())
+                .orElseThrow(() -> new EntityNotFoundException("Dirección no encontrada"));
 
         BigDecimal total = request.getDetalles().stream()
                 .map(detalle -> detalle.getPrecioUnitario().multiply(BigDecimal.valueOf(detalle.getCantidad())))
@@ -45,19 +46,17 @@ public class PedidoServiceImpl implements PedidoService {
 
         Pedido pedido = Pedido.builder()
                 .sede(sede)
-                .clienteNombre(request.getClienteNombre())
-                .clienteTelefono(request.getClienteTelefono())
+                .cliente(cliente)
+                .direccion(direccion)
                 .notasEntrega(request.getNotasEntrega())
                 .total(total)
-                .estado("PENDIENTE")
-                .creadoEn(LocalDateTime.now())
                 .build();
 
         Pedido savedPedido = pedidoRepository.save(pedido);
 
         for (DetallePedidoRequestDTO detalleRequest : request.getDetalles()) {
             Producto producto = productoRepository.findById(detalleRequest.getProductoId())
-                    .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado"));
+                    .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado"));
 
             DetallePedido detallePedido = DetallePedido.builder()
                     .pedido(savedPedido)
@@ -80,22 +79,13 @@ public class PedidoServiceImpl implements PedidoService {
                 : pedidoRepository.findBySede_Id(sedeId);
 
         return pedidos.stream()
-                .map(pedido -> {
-                    PedidoAdminResponseDTO dto = new PedidoAdminResponseDTO();
-                    dto.setId(pedido.getId());
-                    dto.setClienteNombre(pedido.getClienteNombre());
-                    dto.setClienteTelefono(pedido.getClienteTelefono());
-                    dto.setTotal(pedido.getTotal());
-                    dto.setEstado(pedido.getEstado());
-                    dto.setCreadoEn(pedido.getCreadoEn());
-                    return dto;
-                })
+                .map(this::mapToAdminResponseDTO)
                 .collect(Collectors.toList());
     }
 
     @Transactional
     @Override
-    public PedidoAdminResponseDTO actualizarEstadoPedido(Integer pedidoId, String nuevoEstado, Integer usuarioSedeId, String rol) {
+    public PedidoAdminResponseDTO actualizarEstadoPedido(Integer pedidoId, EstadoPedido nuevoEstado, Integer usuarioSedeId, String rol) {
         Pedido pedido = pedidoRepository.findById(pedidoId)
                 .orElseThrow(() -> new EntityNotFoundException("Pedido no encontrado"));
 
@@ -106,13 +96,25 @@ public class PedidoServiceImpl implements PedidoService {
         pedido.setEstado(nuevoEstado);
         pedidoRepository.save(pedido);
 
-        PedidoAdminResponseDTO dto = new PedidoAdminResponseDTO();
-        dto.setId(pedido.getId());
-        dto.setClienteNombre(pedido.getClienteNombre());
-        dto.setClienteTelefono(pedido.getClienteTelefono());
-        dto.setTotal(pedido.getTotal());
-        dto.setEstado(pedido.getEstado());
-        dto.setCreadoEn(pedido.getCreadoEn());
-        return dto;
+        return mapToAdminResponseDTO(pedido);
+    }
+
+    private PedidoAdminResponseDTO mapToAdminResponseDTO(Pedido pedido) {
+        Cliente cliente = pedido.getCliente();
+        Direccion direccion = pedido.getDireccion();
+
+        return PedidoAdminResponseDTO.builder()
+                .id(pedido.getId())
+                .clienteNombre(cliente.getNombre())
+                .clienteEmail(cliente.getEmail())
+                .clienteTelefono(cliente.getTelefono())
+                .direccionAlias(direccion.getAlias())
+                .direccionCompleta(direccion.getDireccion())
+                .direccionCiudad(direccion.getCiudad())
+                .total(pedido.getTotal())
+                .estado(pedido.getEstado().name())
+                .transaccionId(pedido.getTransaccionId())
+                .creadoEn(pedido.getCreadoEn())
+                .build();
     }
 }
