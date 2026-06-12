@@ -41,8 +41,9 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
-                        // 1. Rutas Públicas
-                        .requestMatchers("/api/auth/**", "/api/v1/**").permitAll()
+                        // 1. Rutas Públicas (no requieren autenticación)
+                        .requestMatchers("/api/auth/**", "/api/v1/clientes/auth/**").permitAll()
+                        .requestMatchers("/api/v1/**").permitAll()
                         // 2. Rutas exclusivas del Superadmin
                         .requestMatchers("/api/superadmin/**").hasAuthority("SUPERADMIN")
                         // 3. Rutas de los Administradores de Sede

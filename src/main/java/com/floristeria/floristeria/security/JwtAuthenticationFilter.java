@@ -48,35 +48,53 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             final String email = jwtService.extractUsername(token);
+            final Claims claims = jwtService.extractAllClaims(token);
+            final String rol = claims.get("rol", String.class);
 
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // Validar que el usuario sigue existiendo en la DB (activado/no eliminado)
-                UserDetails dbUserDetails = userDetailsService.loadUserByUsername(email);
 
-                boolean isTokenValid = jwtService.isTokenValid(token, dbUserDetails);
+                if ("CLIENTE".equals(rol)) {
+                    // === FLUJO CLIENTE ===
+                    Integer clienteId = claims.get("clienteId", Integer.class);
 
-                if (isTokenValid) {
-                    // Extraer claims del JWT como fuente autoritativa (no de la DB)
-                    Claims claims = jwtService.extractAllClaims(token);
-                    Integer sedeId = claims.get("sedeId", Integer.class);
-                    String rol = claims.get("rol", String.class);
-
-                    // Construir UsuarioDetails desde los claims firmados del JWT
-                    UsuarioDetails usuarioDetails = new UsuarioDetails(
+                    ClienteDetails clienteDetails = new ClienteDetails(
                             email,
-                            dbUserDetails.getPassword(),
-                            Collections.singletonList(new SimpleGrantedAuthority(rol)),
-                            sedeId,
-                            rol
+                            "", // sin contraseña en el contexto
+                            Collections.singletonList(new SimpleGrantedAuthority("CLIENTE")),
+                            clienteId
                     );
 
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            usuarioDetails,
+                            clienteDetails,
                             null,
-                            usuarioDetails.getAuthorities()
+                            clienteDetails.getAuthorities()
                     );
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                } else {
+                    // === FLUJO ADMIN ===
+                    UserDetails dbUserDetails = userDetailsService.loadUserByUsername(email);
+                    boolean isTokenValid = jwtService.isTokenValid(token, dbUserDetails);
+
+                    if (isTokenValid) {
+                        Integer sedeId = claims.get("sedeId", Integer.class);
+
+                        UsuarioDetails usuarioDetails = new UsuarioDetails(
+                                email,
+                                dbUserDetails.getPassword(),
+                                Collections.singletonList(new SimpleGrantedAuthority(rol)),
+                                sedeId,
+                                rol
+                        );
+
+                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                usuarioDetails,
+                                null,
+                                usuarioDetails.getAuthorities()
+                        );
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    }
                 }
             }
         } catch (Exception e) {

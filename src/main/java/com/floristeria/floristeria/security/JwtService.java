@@ -1,5 +1,6 @@
 package com.floristeria.floristeria.security;
 
+import com.floristeria.floristeria.entity.Cliente;
 import com.floristeria.floristeria.entity.UsuarioAdmin;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -30,6 +31,17 @@ public class JwtService {
         }
 
         return builder
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public String generateToken(Cliente cliente) {
+        return Jwts.builder()
+                .subject(cliente.getEmail())
+                .claim("rol", "CLIENTE")
+                .claim("clienteId", cliente.getId())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSigningKey())
