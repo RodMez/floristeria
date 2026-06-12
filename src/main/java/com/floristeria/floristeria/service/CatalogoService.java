@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.floristeria.floristeria.dto.ProductoCatalogoDTO;
 import com.floristeria.floristeria.entity.Categoria;
-import com.floristeria.floristeria.entity.Inventario;
 import com.floristeria.floristeria.entity.Producto;
 import com.floristeria.floristeria.repository.InventarioRepository;
 
