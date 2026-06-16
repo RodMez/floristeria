@@ -1,7 +1,10 @@
 package com.floristeria.floristeria.service.impl;
 
+import com.floristeria.floristeria.dto.DetallePedidoClienteDTO;
 import com.floristeria.floristeria.dto.DetallePedidoRequestDTO;
 import com.floristeria.floristeria.dto.PedidoAdminResponseDTO;
+import com.floristeria.floristeria.dto.PedidoClienteRequestDTO;
+import com.floristeria.floristeria.dto.PedidoClienteResponseDTO;
 import com.floristeria.floristeria.dto.PedidoRequestDTO;
 import com.floristeria.floristeria.entity.*;
 import com.floristeria.floristeria.repository.*;
@@ -27,6 +30,7 @@ public class PedidoServiceImpl implements PedidoService {
     private final ProductoRepository productoRepository;
     private final ClienteRepository clienteRepository;
     private final DireccionRepository direccionRepository;
+    private final InventarioRepository inventarioRepository;
 
     @Transactional
     @Override
@@ -70,6 +74,90 @@ public class PedidoServiceImpl implements PedidoService {
         }
 
         return savedPedido.getId();
+    }
+
+    @Transactional
+    @Override
+    public PedidoClienteResponseDTO crearPedidoCliente(PedidoClienteRequestDTO request, Integer clienteId) {
+        // Validar que la sede existe
+        Sede sede = sedeRepository.findById(request.getSedeId())
+                .orElseThrow(() -> new EntityNotFoundException("Sede no encontrada"));
+
+        // Validar que el cliente existe
+        Cliente cliente = clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new EntityNotFoundException("Cliente no encontrado"));
+
+        // Validar que la dirección pertenece al cliente (Prevención IDOR)
+        Direccion direccion = direccionRepository.findById(request.getDireccionId())
+                .orElseThrow(() -> new EntityNotFoundException("Dirección no encontrada"));
+
+        if (!direccion.getCliente().getId().equals(clienteId)) {
+            throw new AccessDeniedException("La dirección no pertenece al cliente autenticado");
+        }
+
+        // Calcular total y validar stock desde Inventario
+        BigDecimal total = BigDecimal.ZERO;
+
+        Pedido pedido = Pedido.builder()
+                .sede(sede)
+                .cliente(cliente)
+                .direccion(direccion)
+                .notasEntrega(request.getNotasEntrega())
+                .total(BigDecimal.ZERO) // Temporal, se actualiza después
+                .build();
+
+        Pedido savedPedido = pedidoRepository.save(pedido);
+
+        for (DetallePedidoClienteDTO detalleRequest : request.getDetalles()) {
+            // Buscar inventario en la sede específica
+            Inventario inventario = inventarioRepository.findByProducto_IdAndSede_Id(
+                    detalleRequest.getProductoId(), request.getSedeId());
+
+            if (inventario == null) {
+                throw new EntityNotFoundException(
+                        "Producto no disponible en la sede seleccionada");
+            }
+
+            // Validar disponibilidad y stock
+            if (!inventario.getDisponible() || inventario.getStock() < detalleRequest.getCantidad()) {
+                throw new IllegalStateException(
+                        "Stock insuficiente para el producto ID: " + detalleRequest.getProductoId());
+            }
+
+            Producto producto = inventario.getProducto();
+
+            // Usar precio del inventario (precio específico de la sede)
+            BigDecimal precioUnitario = inventario.getPrecio();
+            BigDecimal subtotal = precioUnitario.multiply(BigDecimal.valueOf(detalleRequest.getCantidad()));
+            total = total.add(subtotal);
+
+            DetallePedido detallePedido = DetallePedido.builder()
+                    .pedido(savedPedido)
+                    .producto(producto)
+                    .cantidad(detalleRequest.getCantidad())
+                    .precioUnitario(precioUnitario)
+                    .notaPersonalizacion(detalleRequest.getNotaPersonalizacion())
+                    .build();
+
+            detallePedidoRepository.save(detallePedido);
+
+            // Descontar stock
+            inventario.setStock(inventario.getStock() - detalleRequest.getCantidad());
+            if (inventario.getStock() == 0) {
+                inventario.setDisponible(false);
+            }
+            inventarioRepository.save(inventario);
+        }
+
+        // Actualizar total del pedido
+        savedPedido.setTotal(total);
+        pedidoRepository.save(savedPedido);
+
+        return PedidoClienteResponseDTO.builder()
+                .pedidoId(savedPedido.getId())
+                .total(total)
+                .estado(savedPedido.getEstado().name())
+                .build();
     }
 
     @Override
