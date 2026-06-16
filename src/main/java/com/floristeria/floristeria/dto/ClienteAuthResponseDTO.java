@@ -17,4 +17,5 @@ public class ClienteAuthResponseDTO {
     private Integer clienteId;
     private String nombre;
     private String email;
+    private String rol;
 }
