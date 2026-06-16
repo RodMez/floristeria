@@ -46,6 +46,7 @@ public class ClienteAuthServiceImpl implements ClienteAuthService {
                 .clienteId(cliente.getId())
                 .nombre(cliente.getNombre())
                 .email(cliente.getEmail())
+                .rol("CLIENTE")
                 .build();
     }
 
@@ -69,6 +70,7 @@ public class ClienteAuthServiceImpl implements ClienteAuthService {
                 .clienteId(cliente.getId())
                 .nombre(cliente.getNombre())
                 .email(cliente.getEmail())
+                .rol("CLIENTE")
                 .build();
     }
 }
