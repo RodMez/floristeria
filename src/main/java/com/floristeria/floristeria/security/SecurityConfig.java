@@ -43,12 +43,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                         // 1. Rutas Públicas (no requieren autenticación)
                         .requestMatchers("/api/auth/**", "/api/v1/clientes/auth/**").permitAll()
-                        .requestMatchers("/api/v1/**").permitAll()
-                        // 2. Rutas exclusivas del Superadmin
+                        // Endpoints públicos de catálogo
+                        .requestMatchers("/api/v1/catalogo/**", "/api/v1/sedes/**", "/api/v1/categorias/**").permitAll()
+                        // 2. Rutas de Clientes (requieren rol CLIENTE autenticado)
+                        .requestMatchers("/api/v1/clientes/direcciones/**", "/api/v1/clientes/pedidos/**").hasAuthority("CLIENTE")
+                        // 3. Rutas exclusivas del Superadmin
                         .requestMatchers("/api/superadmin/**").hasAuthority("SUPERADMIN")
-                        // 3. Rutas de los Administradores de Sede
+                        // 4. Rutas de los Administradores de Sede
                         .requestMatchers("/api/admin/**").hasAnyAuthority("ADMIN", "SUPERADMIN")
-                        // 4. Cualquier otra ruta requiere autenticación
+                        // 5. Cualquier otra ruta requiere autenticación
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
