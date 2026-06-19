@@ -95,6 +95,12 @@ public class PedidoServiceImpl implements PedidoService {
             throw new AccessDeniedException("La dirección no pertenece al cliente autenticado");
         }
 
+        // Validar que la dirección esté en la misma ciudad que la sede
+        if (!direccion.getCiudad().equalsIgnoreCase(sede.getCiudad())) {
+            throw new IllegalArgumentException(
+                    "La dirección de entrega debe estar en la misma ciudad que la sede de la tienda (" + sede.getCiudad() + ").");
+        }
+
         // Calcular total y validar stock desde Inventario
         BigDecimal total = BigDecimal.ZERO;
 
