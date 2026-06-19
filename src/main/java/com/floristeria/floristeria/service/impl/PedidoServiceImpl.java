@@ -17,6 +17,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.access.AccessDeniedException;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -103,6 +104,7 @@ public class PedidoServiceImpl implements PedidoService {
 
         // Calcular total y validar stock desde Inventario
         BigDecimal total = BigDecimal.ZERO;
+        List<DetallePedido> detallesPedidos = new ArrayList<>();
 
         Pedido pedido = Pedido.builder()
                 .sede(sede)
@@ -146,18 +148,15 @@ public class PedidoServiceImpl implements PedidoService {
                     .build();
 
             detallePedidoRepository.save(detallePedido);
-
-            // Descontar stock
-            inventario.setStock(inventario.getStock() - detalleRequest.getCantidad());
-            if (inventario.getStock() == 0) {
-                inventario.setDisponible(false);
-            }
-            inventarioRepository.save(inventario);
+            detallesPedidos.add(detallePedido);
         }
 
-        // Actualizar total del pedido
+        // Actualizar total y detalles del pedido
         savedPedido.setTotal(total);
+        savedPedido.setDetalles(detallesPedidos);
         pedidoRepository.save(savedPedido);
+
+        deducirInventario(savedPedido);
 
         return PedidoClienteResponseDTO.builder()
                 .pedidoId(savedPedido.getId())
@@ -187,6 +186,14 @@ public class PedidoServiceImpl implements PedidoService {
             throw new AccessDeniedException("No tiene permisos sobre este pedido");
         }
 
+        if (nuevoEstado == EstadoPedido.PAGADO) {
+            throw new IllegalStateException("El pago solo puede ser procesado automáticamente por la pasarela.");
+        }
+
+        if (pedido.getEstado() == EstadoPedido.PENDIENTE_PAGO && nuevoEstado != EstadoPedido.CANCELADO) {
+            throw new IllegalStateException("Desde PENDIENTE_PAGO solo se permite cancelar el pedido.");
+        }
+
         pedido.setEstado(nuevoEstado);
         pedidoRepository.save(pedido);
 
@@ -210,5 +217,42 @@ public class PedidoServiceImpl implements PedidoService {
                 .transaccionId(pedido.getTransaccionId())
                 .creadoEn(pedido.getCreadoEn())
                 .build();
+    }
+
+    private void deducirInventario(Pedido pedido) {
+        for (DetallePedido detalle : pedido.getDetalles()) {
+            Inventario inventario = inventarioRepository.findByProducto_IdAndSede_Id(
+                    detalle.getProducto().getId(), pedido.getSede().getId());
+
+            if (inventario == null || !inventario.getDisponible()
+                    || inventario.getStock() < detalle.getCantidad()) {
+                throw new IllegalStateException(
+                        "Stock insuficiente para el producto ID: " + detalle.getProducto().getId());
+            }
+
+            inventario.setStock(inventario.getStock() - detalle.getCantidad());
+            if (inventario.getStock() == 0) {
+                inventario.setDisponible(false);
+            }
+            inventarioRepository.save(inventario);
+        }
+    }
+
+    @Transactional
+    @Override
+    public void procesarPagoExitoso(Integer pedidoId, String transaccionId, String metodoPago) {
+        Pedido pedido = pedidoRepository.findById(pedidoId)
+                .orElseThrow(() -> new EntityNotFoundException("Pedido no encontrado"));
+
+        if (pedido.getEstado() != EstadoPedido.PENDIENTE_PAGO) {
+            throw new IllegalStateException(
+                    "No se puede procesar el pago de un pedido en estado: " + pedido.getEstado());
+        }
+
+        pedido.setEstado(EstadoPedido.PAGADO);
+        pedido.setTransaccionId(transaccionId);
+        pedidoRepository.save(pedido);
+
+        deducirInventario(pedido);
     }
 }
