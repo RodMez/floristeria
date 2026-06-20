@@ -10,6 +10,7 @@ import com.floristeria.floristeria.entity.*;
 import com.floristeria.floristeria.repository.*;
 import com.floristeria.floristeria.service.PedidoService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,8 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.access.AccessDeniedException;
 
 import java.math.BigDecimal;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,6 +35,12 @@ public class PedidoServiceImpl implements PedidoService {
     private final ClienteRepository clienteRepository;
     private final DireccionRepository direccionRepository;
     private final InventarioRepository inventarioRepository;
+
+    @Value("${wompi.public-key}")
+    private String wompiPublicKey;
+
+    @Value("${wompi.integrity-secret}")
+    private String wompiIntegritySecret;
 
     @Transactional
     @Override
@@ -158,11 +167,41 @@ public class PedidoServiceImpl implements PedidoService {
 
         deducirInventario(savedPedido);
 
+        String referencia = savedPedido.getId() + "-" + System.currentTimeMillis();
+        savedPedido.setReferenciaPago(referencia);
+        pedidoRepository.save(savedPedido);
+
+        long montoCentavos = savedPedido.getTotal().longValue() * 100;
+        String cadena = referencia + montoCentavos + "COP" + wompiIntegritySecret;
+        String firmaIntegridad = generarSha256Hex(cadena);
+
         return PedidoClienteResponseDTO.builder()
                 .pedidoId(savedPedido.getId())
                 .total(total)
                 .estado(savedPedido.getEstado().name())
+                .referenciaWompi(referencia)
+                .montoEnCentavos(montoCentavos)
+                .firmaIntegridad(firmaIntegridad)
+                .publicKeyWompi(wompiPublicKey)
                 .build();
+    }
+
+    private String generarSha256Hex(String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = digest.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hashBytes) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Algoritmo SHA-256 no disponible en el JVM", e);
+        }
     }
 
     @Override

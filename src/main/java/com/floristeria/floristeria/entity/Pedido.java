@@ -44,6 +44,9 @@ public class Pedido {
     @Column(name = "estado", nullable = false)
     private EstadoPedido estado;
 
+    @Column(name = "referencia_pago")
+    private String referenciaPago;
+
     @Column(name = "transaccion_id")
     private String transaccionId;
 
