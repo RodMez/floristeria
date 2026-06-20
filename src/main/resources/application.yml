@@ -29,3 +29,7 @@ imagekit:
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+
+wompi:
+  public-key: ${WOMPI_PUBLIC_KEY:pub_test_XXXXX}
+  integrity-secret: ${WOMPI_INTEGRITY_SECRET:test_integrity_XXXXX}

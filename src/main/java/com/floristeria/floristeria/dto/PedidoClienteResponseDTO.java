@@ -15,4 +15,8 @@ public class PedidoClienteResponseDTO {
     private Integer pedidoId;
     private BigDecimal total;
     private String estado;
+    private String referenciaWompi;
+    private Long montoEnCentavos;
+    private String firmaIntegridad;
+    private String publicKeyWompi;
 }
