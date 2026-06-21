@@ -5,9 +5,11 @@ import com.floristeria.floristeria.dto.SedeResponseDTO;
 import com.floristeria.floristeria.entity.Inventario;
 import com.floristeria.floristeria.entity.Producto;
 import com.floristeria.floristeria.entity.Sede;
+import com.floristeria.floristeria.entity.UsuarioAdmin;
 import com.floristeria.floristeria.repository.InventarioRepository;
 import com.floristeria.floristeria.repository.ProductoRepository;
 import com.floristeria.floristeria.repository.SedeRepository;
+import com.floristeria.floristeria.repository.UsuarioAdminRepository;
 import com.floristeria.floristeria.service.SedeService;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -16,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,6 +30,7 @@ public class SedeServiceImpl implements SedeService {
     private final SedeRepository sedeRepository;
     private final ProductoRepository productoRepository;
     private final InventarioRepository inventarioRepository;
+    private final UsuarioAdminRepository usuarioAdminRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -81,7 +85,21 @@ public class SedeServiceImpl implements SedeService {
     public void eliminarSede(Integer id) {
         Sede sede = sedeRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Sede no encontrada con id: " + id));
-        sedeRepository.delete(sede);
+
+        List<Inventario> inventarios = inventarioRepository.findBySede_Id(id);
+        for (Inventario inv : inventarios) {
+            inv.setDeletedAt(LocalDateTime.now());
+            inventarioRepository.save(inv);
+        }
+
+        List<UsuarioAdmin> usuarios = usuarioAdminRepository.findBySede_Id(id);
+        for (UsuarioAdmin user : usuarios) {
+            user.setDeletedAt(LocalDateTime.now());
+            usuarioAdminRepository.save(user);
+        }
+
+        sede.setDeletedAt(LocalDateTime.now());
+        sedeRepository.save(sede);
     }
 
     private SedeResponseDTO toResponseDTO(Sede sede) {
