@@ -10,18 +10,21 @@ import lombok.Setter;
 @Setter
 public class UsuarioAdminRequestDTO {
 
-    @NotBlank
-    @Email
+    public interface Create {}
+    public interface Update {}
+
+    @NotBlank(message = "El email es obligatorio")
+    @Email(message = "El email no tiene un formato válido")
     private String email;
 
-    @NotBlank
+    @NotBlank(message = "El nombre es obligatorio")
     private String nombre;
 
-    @NotBlank
-    @Size(min = 8)
+    @NotBlank(groups = Create.class, message = "La contraseña es obligatoria")
+    @Size(groups = Create.class, min = 8, message = "La contraseña debe tener al menos 8 caracteres")
     private String password;
 
-    @NotBlank
+    @NotBlank(message = "El rol es obligatorio")
     private String rol;
 
     private Integer sedeId;

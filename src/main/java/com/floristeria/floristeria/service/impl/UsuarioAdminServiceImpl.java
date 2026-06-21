@@ -69,7 +69,9 @@ public class UsuarioAdminServiceImpl implements UsuarioAdminService {
 
         usuario.setEmail(request.getEmail());
         usuario.setNombre(request.getNombre());
-        usuario.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            usuario.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        }
         usuario.setRol(request.getRol());
         usuario.setSede(sede);
 
