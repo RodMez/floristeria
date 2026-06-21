@@ -22,6 +22,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,6 +42,9 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Value("${wompi.integrity-secret}")
     private String wompiIntegritySecret;
+
+    @Value("${wompi.events-secret}")
+    private String wompiEventsSecret;
 
     @Transactional
     @Override
@@ -165,8 +169,6 @@ public class PedidoServiceImpl implements PedidoService {
         savedPedido.setDetalles(detallesPedidos);
         pedidoRepository.save(savedPedido);
 
-        deducirInventario(savedPedido);
-
         String referencia = savedPedido.getId() + "-" + System.currentTimeMillis();
         savedPedido.setReferenciaPago(referencia);
         pedidoRepository.save(savedPedido);
@@ -290,6 +292,76 @@ public class PedidoServiceImpl implements PedidoService {
 
         pedido.setEstado(EstadoPedido.PAGADO);
         pedido.setTransaccionId(transaccionId);
+        pedido.setMetodoPago(metodoPago);
+        pedidoRepository.save(pedido);
+
+        deducirInventario(pedido);
+    }
+
+    @Override
+    public void procesarWebhookWompi(Map<String, Object> payload) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> data = (Map<String, Object>) payload.get("data");
+        if (data == null) {
+            throw new IllegalArgumentException("Payload no contiene nodo 'data'");
+        }
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> transaction = (Map<String, Object>) data.get("transaction");
+        if (transaction == null) {
+            throw new IllegalArgumentException("Payload no contiene 'data.transaction'");
+        }
+
+        String transactionId = (String) transaction.get("id");
+        String status = (String) transaction.get("status");
+        Object amountObj = transaction.get("amount_in_cents");
+        String reference = (String) transaction.get("reference");
+        String paymentMethodType = (String) transaction.get("payment_method_type");
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> signature = (Map<String, Object>) payload.get("signature");
+        if (signature == null) {
+            throw new IllegalArgumentException("Payload no contiene 'signature'");
+        }
+        String checksum = (String) signature.get("checksum");
+
+        Object timestamp = payload.get("timestamp");
+        Long timestampSecs = (timestamp instanceof Number) ? ((Number) timestamp).longValue() : null;
+
+        if (transactionId == null || status == null || amountObj == null || checksum == null || timestampSecs == null) {
+            throw new IllegalArgumentException("Payload incompleto para validación de firma");
+        }
+
+        String amountInCents = amountObj.toString();
+        String cadenaFirma = transactionId + status + amountInCents + timestampSecs + wompiEventsSecret;
+        String firmaCalculada = generarSha256Hex(cadenaFirma);
+
+        if (!firmaCalculada.equals(checksum)) {
+            throw new SecurityException("Firma del webhook inválida");
+        }
+
+        if (!"APPROVED".equalsIgnoreCase(status)) {
+            return;
+        }
+
+        Pedido pedido = pedidoRepository.findByReferenciaPago(reference)
+                .orElse(null);
+
+        if (pedido == null) {
+            return;
+        }
+
+        if (pedido.getEstado() == EstadoPedido.PAGADO) {
+            return;
+        }
+
+        if (pedido.getEstado() != EstadoPedido.PENDIENTE_PAGO) {
+            return;
+        }
+
+        pedido.setEstado(EstadoPedido.PAGADO);
+        pedido.setTransaccionId(transactionId);
+        pedido.setMetodoPago(paymentMethodType);
         pedidoRepository.save(pedido);
 
         deducirInventario(pedido);

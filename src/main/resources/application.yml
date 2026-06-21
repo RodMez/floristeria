@@ -33,3 +33,4 @@ app:
 wompi:
   public-key: ${WOMPI_PUBLIC_KEY:pub_test_XXXXX}
   integrity-secret: ${WOMPI_INTEGRITY_SECRET:test_integrity_XXXXX}
+  events-secret: ${WOMPI_EVENTS_SECRET:test_events_XXXXX}

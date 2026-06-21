@@ -7,6 +7,7 @@ import com.floristeria.floristeria.dto.PedidoRequestDTO;
 import com.floristeria.floristeria.entity.EstadoPedido;
 
 import java.util.List;
+import java.util.Map;
 
 public interface PedidoService {
 
@@ -19,4 +20,6 @@ public interface PedidoService {
     PedidoAdminResponseDTO actualizarEstadoPedido(Integer pedidoId, EstadoPedido nuevoEstado, Integer usuarioSedeId, String rol);
 
     void procesarPagoExitoso(Integer pedidoId, String transaccionId, String metodoPago);
+
+    void procesarWebhookWompi(Map<String, Object> payload);
 }

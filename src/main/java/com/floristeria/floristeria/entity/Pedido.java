@@ -50,6 +50,9 @@ public class Pedido {
     @Column(name = "transaccion_id")
     private String transaccionId;
 
+    @Column(name = "metodo_pago")
+    private String metodoPago;
+
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetallePedido> detalles;
 
