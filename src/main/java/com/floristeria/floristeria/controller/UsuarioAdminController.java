@@ -4,11 +4,11 @@ import com.floristeria.floristeria.dto.UsuarioAdminRequestDTO;
 import com.floristeria.floristeria.dto.UsuarioAdminResponseDTO;
 import com.floristeria.floristeria.service.UsuarioAdminService;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,14 +27,14 @@ public class UsuarioAdminController {
 
     @PostMapping
     public ResponseEntity<UsuarioAdminResponseDTO> crearUsuario(
-            @Valid @RequestBody UsuarioAdminRequestDTO request) {
+            @Validated(UsuarioAdminRequestDTO.Create.class) @RequestBody UsuarioAdminRequestDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioAdminService.crearUsuario(request));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<UsuarioAdminResponseDTO> actualizarUsuario(
             @PathVariable Integer id,
-            @Valid @RequestBody UsuarioAdminRequestDTO request) {
+            @Validated(UsuarioAdminRequestDTO.Update.class) @RequestBody UsuarioAdminRequestDTO request) {
         return ResponseEntity.ok(usuarioAdminService.actualizarUsuario(id, request));
     }
 
