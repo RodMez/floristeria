@@ -245,15 +245,45 @@ public class PedidoServiceImpl implements PedidoService {
     private PedidoAdminResponseDTO mapToAdminResponseDTO(Pedido pedido) {
         Cliente cliente = pedido.getCliente();
         Direccion direccion = pedido.getDireccion();
+        Sede sede = pedido.getSede();
+
+        PedidoAdminResponseDTO.DireccionEntregaDTO direccionEntrega = direccion != null
+                ? PedidoAdminResponseDTO.DireccionEntregaDTO.builder()
+                        .alias(direccion.getAlias())
+                        .direccion(direccion.getDireccion())
+                        .ciudad(direccion.getCiudad())
+                        .detalles(direccion.getDetalles())
+                        .build()
+                : PedidoAdminResponseDTO.DireccionEntregaDTO.builder()
+                        .alias("Dirección eliminada")
+                        .direccion("N/A")
+                        .ciudad("N/A")
+                        .detalles("")
+                        .build();
+
+        List<PedidoAdminResponseDTO.DetallePedidoAdminDTO> detalles =
+                pedido.getDetalles() != null
+                        ? pedido.getDetalles().stream()
+                                .map(d -> PedidoAdminResponseDTO.DetallePedidoAdminDTO.builder()
+                                        .productoNombre(d.getProducto() != null
+                                                ? d.getProducto().getNombre() : "Producto eliminado")
+                                        .cantidad(d.getCantidad())
+                                        .precioUnitario(d.getPrecioUnitario())
+                                        .notaPersonalizacion(d.getNotaPersonalizacion())
+                                        .build())
+                                .collect(Collectors.toList())
+                        : new ArrayList<>();
 
         return PedidoAdminResponseDTO.builder()
                 .id(pedido.getId())
                 .clienteNombre(cliente != null ? cliente.getNombre() : "Cliente eliminado")
                 .clienteEmail(cliente != null ? cliente.getEmail() : "N/A")
                 .clienteTelefono(cliente != null ? cliente.getTelefono() : "N/A")
-                .direccionAlias(direccion != null ? direccion.getAlias() : "Dirección eliminada")
-                .direccionCompleta(direccion != null ? direccion.getDireccion() : "N/A")
-                .direccionCiudad(direccion != null ? direccion.getCiudad() : "N/A")
+                .sedeNombre(sede != null ? sede.getNombre() : "Sede eliminada")
+                .metodoPago(pedido.getMetodoPago())
+                .referenciaPago(pedido.getReferenciaPago())
+                .direccionEntrega(direccionEntrega)
+                .detalles(detalles)
                 .total(pedido.getTotal())
                 .estado(pedido.getEstado().name())
                 .transaccionId(pedido.getTransaccionId())
