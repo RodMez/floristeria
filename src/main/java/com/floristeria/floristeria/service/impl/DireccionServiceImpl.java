@@ -12,7 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityNotFoundException;
+import java.time.LocalDateTime;
 import java.util.List;
+
+import org.springframework.security.access.AccessDeniedException;
 
 @Service
 @RequiredArgsConstructor
@@ -50,6 +53,38 @@ public class DireccionServiceImpl implements DireccionService {
 
         Direccion savedDireccion = direccionRepository.save(direccion);
         return mapToResponseDTO(savedDireccion);
+    }
+
+    @Override
+    @Transactional
+    public DireccionResponseDTO actualizarDireccion(Integer direccionId, DireccionRequestDTO request, Integer clienteId) {
+        Direccion direccion = direccionRepository.findById(direccionId)
+                .orElseThrow(() -> new EntityNotFoundException("Dirección no encontrada"));
+
+        if (!direccion.getCliente().getId().equals(clienteId)) {
+            throw new AccessDeniedException("No tienes permiso para editar esta dirección");
+        }
+
+        direccion.setAlias(request.getAlias());
+        direccion.setDireccion(request.getDireccion());
+        direccion.setDetalles(request.getDetalles());
+
+        direccionRepository.save(direccion);
+        return mapToResponseDTO(direccion);
+    }
+
+    @Override
+    @Transactional
+    public void eliminarDireccion(Integer direccionId, Integer clienteId) {
+        Direccion direccion = direccionRepository.findById(direccionId)
+                .orElseThrow(() -> new EntityNotFoundException("Dirección no encontrada"));
+
+        if (!direccion.getCliente().getId().equals(clienteId)) {
+            throw new AccessDeniedException("No tienes permiso para eliminar esta dirección");
+        }
+
+        direccion.setDeletedAt(LocalDateTime.now());
+        direccionRepository.save(direccion);
     }
 
     private DireccionResponseDTO mapToResponseDTO(Direccion direccion) {

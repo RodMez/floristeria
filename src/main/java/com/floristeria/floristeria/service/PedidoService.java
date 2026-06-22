@@ -3,6 +3,7 @@ package com.floristeria.floristeria.service;
 import com.floristeria.floristeria.dto.PedidoAdminResponseDTO;
 import com.floristeria.floristeria.dto.PedidoClienteRequestDTO;
 import com.floristeria.floristeria.dto.PedidoClienteResponseDTO;
+import com.floristeria.floristeria.dto.PedidoHistorialDTO;
 import com.floristeria.floristeria.dto.PedidoRequestDTO;
 import com.floristeria.floristeria.entity.EstadoPedido;
 
@@ -22,4 +23,6 @@ public interface PedidoService {
     void procesarPagoExitoso(Integer pedidoId, String transaccionId, String metodoPago);
 
     void procesarWebhookWompi(Map<String, Object> payload);
+
+    List<PedidoHistorialDTO> obtenerPedidosPorCliente(Integer clienteId);
 }
