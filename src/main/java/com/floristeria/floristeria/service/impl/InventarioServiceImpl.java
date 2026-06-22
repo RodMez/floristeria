@@ -68,8 +68,8 @@ public class InventarioServiceImpl implements InventarioService {
     @Override
     public List<InventarioResponseDTO> obtenerInventarioPorSede(Integer sedeId) {
         List<Inventario> inventarios = (sedeId == null)
-                ? inventarioRepository.findAll()
-                : inventarioRepository.findBySede_Id(sedeId);
+                ? inventarioRepository.findAllActive()
+                : inventarioRepository.findActiveBySedeId(sedeId);
 
         return inventarios.stream()
                 .map(inventario -> {

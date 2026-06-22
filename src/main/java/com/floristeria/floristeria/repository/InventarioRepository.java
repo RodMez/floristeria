@@ -2,6 +2,8 @@ package com.floristeria.floristeria.repository;
 
 import com.floristeria.floristeria.entity.Inventario;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -32,4 +34,16 @@ public interface InventarioRepository extends JpaRepository<Inventario, Integer>
      */
     // CORREGIDO: Sede_Id
     List<Inventario> findBySede_IdIn(List<Integer> sedeIds);
+
+    /**
+     * Lista inventarios cuyo producto NO esté soft-deleteado (usa INNER JOIN estricto).
+     */
+    @Query("SELECT i FROM Inventario i JOIN i.producto p WHERE p.deletedAt IS NULL")
+    List<Inventario> findAllActive();
+
+    /**
+     * Lista inventarios por sede cuyo producto NO esté soft-deleteado (usa INNER JOIN estricto).
+     */
+    @Query("SELECT i FROM Inventario i JOIN i.producto p WHERE i.sede.id = :sedeId AND p.deletedAt IS NULL")
+    List<Inventario> findActiveBySedeId(@Param("sedeId") Integer sedeId);
 }
