@@ -10,4 +10,8 @@ public interface DireccionService {
     List<DireccionResponseDTO> listarMisDirecciones(Integer clienteId);
 
     DireccionResponseDTO crearDireccion(Integer clienteId, DireccionRequestDTO request);
+
+    DireccionResponseDTO actualizarDireccion(Integer direccionId, DireccionRequestDTO request, Integer clienteId);
+
+    void eliminarDireccion(Integer direccionId, Integer clienteId);
 }

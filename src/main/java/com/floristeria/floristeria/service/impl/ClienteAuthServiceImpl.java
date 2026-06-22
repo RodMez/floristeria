@@ -1,12 +1,15 @@
 package com.floristeria.floristeria.service.impl;
 
+import com.floristeria.floristeria.dto.ClienteActualizarRequestDTO;
 import com.floristeria.floristeria.dto.ClienteAuthResponseDTO;
 import com.floristeria.floristeria.dto.ClienteLoginDTO;
+import com.floristeria.floristeria.dto.ClientePerfilResponseDTO;
 import com.floristeria.floristeria.dto.ClienteRegistroDTO;
 import com.floristeria.floristeria.entity.Cliente;
 import com.floristeria.floristeria.repository.ClienteRepository;
 import com.floristeria.floristeria.security.JwtService;
 import com.floristeria.floristeria.service.ClienteAuthService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -71,6 +74,24 @@ public class ClienteAuthServiceImpl implements ClienteAuthService {
                 .nombre(cliente.getNombre())
                 .email(cliente.getEmail())
                 .rol("CLIENTE")
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public ClientePerfilResponseDTO actualizarPerfil(Integer clienteId, ClienteActualizarRequestDTO request) {
+        Cliente cliente = clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new EntityNotFoundException("Cliente no encontrado"));
+
+        cliente.setNombre(request.getNombre());
+        cliente.setTelefono(request.getTelefono());
+        clienteRepository.save(cliente);
+
+        return ClientePerfilResponseDTO.builder()
+                .id(cliente.getId())
+                .nombre(cliente.getNombre())
+                .email(cliente.getEmail())
+                .telefono(cliente.getTelefono())
                 .build();
     }
 }

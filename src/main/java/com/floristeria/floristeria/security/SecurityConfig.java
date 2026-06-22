@@ -47,7 +47,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/catalogo/**", "/api/v1/sedes/**", "/api/v1/categorias/**").permitAll()
                         .requestMatchers("/api/v1/webhooks/**").permitAll()
                         // 2. Rutas de Clientes (requieren rol CLIENTE autenticado)
-                        .requestMatchers("/api/v1/clientes/direcciones/**", "/api/v1/clientes/pedidos/**").hasAuthority("CLIENTE")
+                        .requestMatchers("/api/v1/clientes/**").hasAuthority("CLIENTE")
                         // 3. Rutas exclusivas del Superadmin
                         .requestMatchers("/api/superadmin/**").hasAuthority("SUPERADMIN")
                         // 4. Rutas de los Administradores de Sede

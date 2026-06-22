@@ -5,6 +5,7 @@ import com.floristeria.floristeria.dto.DetallePedidoRequestDTO;
 import com.floristeria.floristeria.dto.PedidoAdminResponseDTO;
 import com.floristeria.floristeria.dto.PedidoClienteRequestDTO;
 import com.floristeria.floristeria.dto.PedidoClienteResponseDTO;
+import com.floristeria.floristeria.dto.PedidoHistorialDTO;
 import com.floristeria.floristeria.dto.PedidoRequestDTO;
 import com.floristeria.floristeria.entity.*;
 import com.floristeria.floristeria.repository.*;
@@ -365,5 +366,25 @@ public class PedidoServiceImpl implements PedidoService {
         pedidoRepository.save(pedido);
 
         deducirInventario(pedido);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PedidoHistorialDTO> obtenerPedidosPorCliente(Integer clienteId) {
+        List<Pedido> pedidos = pedidoRepository.findByCliente_IdOrderByCreadoEnDesc(clienteId);
+
+        return pedidos.stream()
+                .map(this::mapToHistorialDTO)
+                .collect(Collectors.toList());
+    }
+
+    private PedidoHistorialDTO mapToHistorialDTO(Pedido pedido) {
+        return PedidoHistorialDTO.builder()
+                .id(pedido.getId())
+                .total(pedido.getTotal())
+                .estado(pedido.getEstado().name())
+                .creadoEn(pedido.getCreadoEn())
+                .referenciaPago(pedido.getReferenciaPago())
+                .build();
     }
 }
