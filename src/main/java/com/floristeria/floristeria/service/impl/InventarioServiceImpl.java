@@ -1,5 +1,7 @@
 package com.floristeria.floristeria.service.impl;
 
+import com.floristeria.floristeria.entity.Sede;
+import com.floristeria.floristeria.entity.Producto;
 import com.floristeria.floristeria.exception.AccesoDenegadoSedeException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,8 +37,11 @@ public class InventarioServiceImpl implements InventarioService {
                 .orElseThrow(() -> new EntityNotFoundException(MENSAJE_INVENTARIO_NO_ENCONTRADO + inventarioId));
 
         if (!ROL_SUPERADMIN.equals(rol)) {
-            Integer inventarioSedeId = inventario.getSede().getId();
-            if (!inventarioSedeId.equals(usuarioSedeId)) {
+            Sede sede = inventario.getSede();
+            if (sede == null) {
+                throw new EntityNotFoundException("La sede asociada a este inventario ya no existe");
+            }
+            if (!sede.getId().equals(usuarioSedeId)) {
                 throw new AccesoDenegadoSedeException(MENSAJE_ACCESO_DENEGADO);
             }
         }
@@ -47,10 +52,13 @@ public class InventarioServiceImpl implements InventarioService {
 
         Inventario inventarioActualizado = inventarioRepository.save(inventario);
 
+        Producto producto = inventarioActualizado.getProducto();
+        Sede sede = inventarioActualizado.getSede();
+
         return InventarioResponseDTO.builder()
                 .id(inventarioActualizado.getId())
-                .productoNombre(inventarioActualizado.getProducto().getNombre())
-                .sedeNombre(inventarioActualizado.getSede().getNombre())
+                .productoNombre(producto != null ? producto.getNombre() : "Producto eliminado")
+                .sedeNombre(sede != null ? sede.getNombre() : "Sede eliminada")
                 .precio(inventarioActualizado.getPrecio())
                 .stock(inventarioActualizado.getStock())
                 .disponible(inventarioActualizado.getDisponible())
@@ -64,14 +72,19 @@ public class InventarioServiceImpl implements InventarioService {
                 : inventarioRepository.findBySede_Id(sedeId);
 
         return inventarios.stream()
-                .map(inventario -> InventarioResponseDTO.builder()
-                        .id(inventario.getId())
-                        .productoNombre(inventario.getProducto().getNombre())
-                        .sedeNombre(inventario.getSede().getNombre())
-                        .precio(inventario.getPrecio())
-                        .stock(inventario.getStock())
-                        .disponible(inventario.getDisponible())
-                        .build())
+                .map(inventario -> {
+                    Producto producto = inventario.getProducto();
+                    Sede sede = inventario.getSede();
+
+                    return InventarioResponseDTO.builder()
+                            .id(inventario.getId())
+                            .productoNombre(producto != null ? producto.getNombre() : "Producto eliminado")
+                            .sedeNombre(sede != null ? sede.getNombre() : "Sede eliminada")
+                            .precio(inventario.getPrecio())
+                            .stock(inventario.getStock())
+                            .disponible(inventario.getDisponible())
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 }
