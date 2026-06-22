@@ -2,6 +2,8 @@ package com.floristeria.floristeria.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.math.BigDecimal;
@@ -28,10 +30,12 @@ public class Pedido {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cliente_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
     private Cliente cliente;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "direccion_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
     private Direccion direccion;
 
     @Column(name = "notas_entrega")
