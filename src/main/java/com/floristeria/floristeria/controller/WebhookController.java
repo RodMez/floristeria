@@ -20,8 +20,8 @@ public class WebhookController {
     public ResponseEntity<Void> recibirEventoWompi(@RequestBody Map<String, Object> payload) {
         try {
             pedidoService.procesarWebhookWompi(payload);
-        } catch (Exception e) {
-            log.error("Error procesando webhook de Wompi: {}", e.getMessage());
+        } catch (IllegalArgumentException | SecurityException | IllegalStateException e) {
+            log.error("Webhook Wompi - error de negocio (no reintentable): {}", e.getMessage(), e);
         }
         return ResponseEntity.ok().build();
     }
