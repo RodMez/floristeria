@@ -267,6 +267,8 @@ public class PedidoServiceImpl implements PedidoService {
                                 .map(d -> PedidoAdminResponseDTO.DetallePedidoAdminDTO.builder()
                                         .productoNombre(d.getProducto() != null
                                                 ? d.getProducto().getNombre() : "Producto eliminado")
+                                        .productoSku(d.getProducto() != null
+                                                ? d.getProducto().getSku() : "N/A")
                                         .cantidad(d.getCantidad())
                                         .precioUnitario(d.getPrecioUnitario())
                                         .notaPersonalizacion(d.getNotaPersonalizacion())
@@ -329,6 +331,7 @@ public class PedidoServiceImpl implements PedidoService {
         deducirInventario(pedido);
     }
 
+    @Transactional
     @Override
     public void procesarWebhookWompi(Map<String, Object> payload) {
         @SuppressWarnings("unchecked")
@@ -409,12 +412,48 @@ public class PedidoServiceImpl implements PedidoService {
     }
 
     private PedidoHistorialDTO mapToHistorialDTO(Pedido pedido) {
+        Sede sede = pedido.getSede();
+        Direccion direccion = pedido.getDireccion();
+
+        PedidoHistorialDTO.DireccionHistorialDTO direccionEntrega = direccion != null
+                ? PedidoHistorialDTO.DireccionHistorialDTO.builder()
+                        .alias(direccion.getAlias())
+                        .direccion(direccion.getDireccion())
+                        .ciudad(direccion.getCiudad())
+                        .detalles(direccion.getDetalles())
+                        .build()
+                : PedidoHistorialDTO.DireccionHistorialDTO.builder()
+                        .alias("Dirección eliminada")
+                        .direccion("N/A")
+                        .ciudad("N/A")
+                        .detalles("")
+                        .build();
+
+        List<PedidoHistorialDTO.DetalleHistorialDTO> detalles =
+                pedido.getDetalles() != null
+                        ? pedido.getDetalles().stream()
+                                .map(d -> PedidoHistorialDTO.DetalleHistorialDTO.builder()
+                                        .productoNombre(d.getProducto() != null
+                                                ? d.getProducto().getNombre() : "Producto eliminado")
+                                        .productoSku(d.getProducto() != null
+                                                ? d.getProducto().getSku() : "N/A")
+                                        .cantidad(d.getCantidad())
+                                        .precioUnitario(d.getPrecioUnitario())
+                                        .notaPersonalizacion(d.getNotaPersonalizacion())
+                                        .build())
+                                .collect(Collectors.toList())
+                        : new ArrayList<>();
+
         return PedidoHistorialDTO.builder()
                 .id(pedido.getId())
                 .total(pedido.getTotal())
                 .estado(pedido.getEstado().name())
                 .creadoEn(pedido.getCreadoEn())
                 .referenciaPago(pedido.getReferenciaPago())
+                .sedeNombre(sede != null ? sede.getNombre() : "Sede eliminada")
+                .metodoPago(pedido.getMetodoPago() != null ? pedido.getMetodoPago() : "No especificado")
+                .direccionEntrega(direccionEntrega)
+                .detalles(detalles)
                 .build();
     }
 }

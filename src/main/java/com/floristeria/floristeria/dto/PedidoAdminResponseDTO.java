@@ -42,6 +42,7 @@ public class PedidoAdminResponseDTO {
     @Builder
     public static class DetallePedidoAdminDTO {
         private String productoNombre;
+        private String productoSku;
         private Integer cantidad;
         private BigDecimal precioUnitario;
         private String notaPersonalizacion;
