@@ -32,6 +32,12 @@ public class Sede {
     @Column(name = "email")
     private String email;
 
+    @Column(name = "instagram_url")
+    private String instagramUrl;
+
+    @Column(name = "facebook_url")
+    private String facebookUrl;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 }
