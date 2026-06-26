@@ -21,4 +21,6 @@ public class InventarioUpdateRequestDTO {
 
     @NotNull(message = "El campo disponible no puede ser nulo")
     private Boolean disponible;
+
+    private Integer descuentoPorcentaje;
 }

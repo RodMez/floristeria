@@ -42,6 +42,10 @@ public class Inventario {
     @Column(name = "disponible", nullable = false)
     private Boolean disponible;
 
+    @Builder.Default
+    @Column(name = "descuento_porcentaje")
+    private Integer descuentoPorcentaje = 0;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 }
