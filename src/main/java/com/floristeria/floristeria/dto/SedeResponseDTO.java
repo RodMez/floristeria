@@ -13,4 +13,6 @@ public class SedeResponseDTO {
     private String nombre;
     private String ciudad;
     private String telefonoWhatsapp;
+    private String instagramUrl;
+    private String facebookUrl;
 }

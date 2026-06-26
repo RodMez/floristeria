@@ -16,4 +16,8 @@ public class SedeRequestDTO {
 
     @NotBlank(message = "El teléfono de WhatsApp es obligatorio")
     private String telefonoWhatsapp;
+
+    private String instagramUrl;
+
+    private String facebookUrl;
 }
