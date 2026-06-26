@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -54,17 +55,27 @@ public class ProductoServiceImpl implements ProductoService {
             throw new EntityNotFoundException("Una o más categorías no encontradas");
         }
 
-        // 2. Crear y guardar el Producto Maestro
+        // 2. Determinar SKU: auto-generar si viene vacío
+        String sku = (request.getSku() != null && !request.getSku().isBlank())
+                ? request.getSku().trim()
+                : "PRD-" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+
+        if (productoRepository.findBySku(sku).isPresent()) {
+            throw new IllegalArgumentException("Ya existe un producto con el SKU: " + sku);
+        }
+
+        // 3. Crear y guardar el Producto Maestro
         Producto producto = new Producto();
         producto.setNombre(request.getNombre());
         producto.setDescripcion(request.getDescripcion());
         producto.setImagenUrl(request.getImagenUrl());
+        producto.setSku(sku);
         producto.setCategorias(categorias);
         producto.setActivoGlobal(true);
 
         Producto guardado = productoRepository.save(producto);
 
-        // 3. LÓGICA MULTI-TENANT: Repartir el producto a todas las sedes
+        // 4. LÓGICA MULTI-TENANT: Repartir el producto a todas las sedes
         List<Sede> todasLasSedes = sedeRepository.findAll();
         List<Inventario> nuevosInventarios = new ArrayList<>();
 
@@ -75,11 +86,12 @@ public class ProductoServiceImpl implements ProductoService {
             inventario.setPrecio(BigDecimal.ZERO); // Precio inicial 0
             inventario.setStock(0);                // Stock inicial 0
             inventario.setDisponible(false);       // Apagado por defecto para que el Admin local lo encienda
+            inventario.setDescuentoPorcentaje(0);
 
             nuevosInventarios.add(inventario);
         }
 
-        // 4. Guardar todos los registros de inventario en bloque
+        // 5. Guardar todos los registros de inventario en bloque
         inventarioRepository.saveAll(nuevosInventarios);
 
         return toResponseDTO(guardado);
@@ -99,6 +111,18 @@ public class ProductoServiceImpl implements ProductoService {
         producto.setNombre(request.getNombre());
         producto.setDescripcion(request.getDescripcion());
         producto.setImagenUrl(request.getImagenUrl());
+
+        if (request.getSku() != null && !request.getSku().isBlank()
+                && !request.getSku().trim().equals(producto.getSku())) {
+            String nuevoSku = request.getSku().trim();
+            productoRepository.findBySku(nuevoSku).ifPresent(p -> {
+                if (!p.getId().equals(producto.getId())) {
+                    throw new IllegalArgumentException("Ya existe un producto con el SKU: " + nuevoSku);
+                }
+            });
+            producto.setSku(nuevoSku);
+        }
+
         producto.setCategorias(categorias);
 
         Producto guardado = productoRepository.save(producto);
@@ -127,6 +151,7 @@ public class ProductoServiceImpl implements ProductoService {
                 .nombre(producto.getNombre())
                 .descripcion(producto.getDescripcion())
                 .imagenUrl(producto.getImagenUrl())
+                .sku(producto.getSku())
                 .categorias(categoriaInfos)
                 .build();
     }

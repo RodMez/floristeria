@@ -17,6 +17,7 @@ public class ProductoCatalogoDTO {
     private String nombre;
     private String descripcion;
     private String imagenUrl;
+    private String sku;
     private List<String> categoriasNombres;
     private BigDecimal precio;
     private Integer stock;

@@ -15,6 +15,7 @@ public class ProductoResponseDTO {
     private String nombre;
     private String descripcion;
     private String imagenUrl;
+    private String sku;
     private List<CategoriaInfo> categorias;
 
     @Getter

@@ -34,4 +34,9 @@ public interface ProductoRepository extends JpaRepository<Producto, Integer> {
      * Busca productos por múltiples IDs (utilizado para verificación masiva).
      */
     List<Producto> findByIdIn(List<Integer> ids);
+
+    /**
+     * Busca un producto por su SKU (único).
+     */
+    java.util.Optional<Producto> findBySku(String sku);
 }
