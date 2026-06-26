@@ -15,6 +15,8 @@ import com.floristeria.floristeria.service.InventarioService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,6 +51,9 @@ public class InventarioServiceImpl implements InventarioService {
         inventario.setPrecio(request.getPrecio());
         inventario.setStock(request.getStock());
         inventario.setDisponible(request.getDisponible());
+        if (request.getDescuentoPorcentaje() != null) {
+            inventario.setDescuentoPorcentaje(request.getDescuentoPorcentaje());
+        }
 
         Inventario inventarioActualizado = inventarioRepository.save(inventario);
 
@@ -58,10 +63,14 @@ public class InventarioServiceImpl implements InventarioService {
         return InventarioResponseDTO.builder()
                 .id(inventarioActualizado.getId())
                 .productoNombre(producto != null ? producto.getNombre() : "Producto eliminado")
+                .productoSku(producto != null ? producto.getSku() : "N/A")
                 .sedeNombre(sede != null ? sede.getNombre() : "Sede eliminada")
                 .precio(inventarioActualizado.getPrecio())
                 .stock(inventarioActualizado.getStock())
                 .disponible(inventarioActualizado.getDisponible())
+                .descuentoPorcentaje(inventarioActualizado.getDescuentoPorcentaje())
+                .precioFinal(calcularPrecioFinal(inventarioActualizado.getPrecio(), inventarioActualizado.getDescuentoPorcentaje()))
+                .productoImagenUrl(producto != null ? producto.getImagenUrl() : null)
                 .build();
     }
 
@@ -83,8 +92,20 @@ public class InventarioServiceImpl implements InventarioService {
                             .precio(inventario.getPrecio())
                             .stock(inventario.getStock())
                             .disponible(inventario.getDisponible())
+                            .descuentoPorcentaje(inventario.getDescuentoPorcentaje())
+                            .precioFinal(calcularPrecioFinal(inventario.getPrecio(), inventario.getDescuentoPorcentaje()))
+                            .productoImagenUrl(producto != null ? producto.getImagenUrl() : null)
                             .build();
                 })
                 .collect(Collectors.toList());
+    }
+
+    private BigDecimal calcularPrecioFinal(BigDecimal precio, Integer descuentoPorcentaje) {
+        if (descuentoPorcentaje == null || descuentoPorcentaje <= 0) {
+            return precio;
+        }
+        BigDecimal descuento = precio.multiply(BigDecimal.valueOf(descuentoPorcentaje))
+                .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+        return precio.subtract(descuento);
     }
 }

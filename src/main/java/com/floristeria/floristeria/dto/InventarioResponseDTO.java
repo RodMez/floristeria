@@ -12,8 +12,12 @@ import lombok.Setter;
 public class InventarioResponseDTO {
     private Integer id;
     private String productoNombre;
+    private String productoSku;
     private String sedeNombre;
     private BigDecimal precio;
     private Integer stock;
     private Boolean disponible;
+    private Integer descuentoPorcentaje;
+    private BigDecimal precioFinal;
+    private String productoImagenUrl;
 }
