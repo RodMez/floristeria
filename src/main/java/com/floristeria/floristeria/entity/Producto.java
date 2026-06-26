@@ -38,6 +38,9 @@ public class Producto {
     @Column(name = "imagen_url")
     private String imagenUrl;
 
+    @Column(unique = true)
+    private String sku;
+
     @Column(name = "activo_global", nullable = false)
     private Boolean activoGlobal;
 

@@ -21,6 +21,8 @@ public class ProductoRequestDTO {
     @NotBlank
     private String imagenUrl;
 
+    private String sku;
+
     @NotNull
     @Size(min = 1, message = "Debe seleccionar al menos una categoría")
     private List<Integer> categoriaIds;
