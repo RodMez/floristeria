@@ -88,6 +88,7 @@ public class InventarioServiceImpl implements InventarioService {
                     return InventarioResponseDTO.builder()
                             .id(inventario.getId())
                             .productoNombre(producto != null ? producto.getNombre() : "Producto eliminado")
+                            .productoSku(producto != null ? producto.getSku() : "N/A")
                             .sedeNombre(sede != null ? sede.getNombre() : "Sede eliminada")
                             .precio(inventario.getPrecio())
                             .stock(inventario.getStock())
