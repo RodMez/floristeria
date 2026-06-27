@@ -2,6 +2,8 @@ package com.floristeria.floristeria.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
@@ -35,6 +37,11 @@ public class Direccion {
 
     @Column(name = "detalles")
     private String detalles;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "zona_domicilio_id")
+    @NotFound(action = NotFoundAction.IGNORE)
+    private ZonaDomicilio zonaDomicilio;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;

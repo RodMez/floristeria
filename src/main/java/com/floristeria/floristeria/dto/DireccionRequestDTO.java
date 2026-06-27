@@ -1,6 +1,7 @@
 package com.floristeria.floristeria.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import lombok.AllArgsConstructor;
@@ -28,4 +29,7 @@ public class DireccionRequestDTO {
 
     @Size(max = 500, message = "Los detalles no pueden exceder 500 caracteres")
     private String detalles;
+
+    @NotNull(message = "El ID de la zona de domicilio es obligatorio")
+    private Integer zonaDomicilioId;
 }

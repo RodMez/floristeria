@@ -15,4 +15,6 @@ public class DireccionResponseDTO {
     private String direccion;
     private String ciudad;
     private String detalles;
+    private Integer zonaDomicilioId;
+    private String zonaDomicilioNombre;
 }
