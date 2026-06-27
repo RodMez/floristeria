@@ -22,6 +22,9 @@ public class PedidoClienteRequestDTO {
     @NotNull(message = "El ID de la dirección es obligatorio")
     private Integer direccionId;
 
+    @NotNull(message = "El ID de la zona de domicilio es obligatorio")
+    private Integer zonaDomicilioId;
+
     @NotNull(message = "La lista de detalles es obligatoria")
     @Size(min = 1, message = "Debe haber al menos un producto en el pedido")
     private List<DetallePedidoClienteDTO> detalles;

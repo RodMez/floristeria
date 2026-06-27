@@ -37,6 +37,7 @@ public class PedidoServiceImpl implements PedidoService {
     private final ClienteRepository clienteRepository;
     private final DireccionRepository direccionRepository;
     private final InventarioRepository inventarioRepository;
+    private final ZonaDomicilioRepository zonaDomicilioRepository;
 
     @Value("${wompi.public-key}")
     private String wompiPublicKey;
@@ -116,6 +117,14 @@ public class PedidoServiceImpl implements PedidoService {
                     "La dirección de entrega debe estar en la misma ciudad que la sede de la tienda (" + sede.getCiudad() + ").");
         }
 
+        // Validar zona de domicilio
+        ZonaDomicilio zonaDomicilio = zonaDomicilioRepository.findById(request.getZonaDomicilioId())
+                .orElseThrow(() -> new EntityNotFoundException("Zona de domicilio no encontrada"));
+
+        if (!zonaDomicilio.getSede().getId().equals(request.getSedeId())) {
+            throw new IllegalArgumentException("La zona de domicilio no pertenece a esta sede");
+        }
+
         // Calcular total y validar stock desde Inventario
         BigDecimal total = BigDecimal.ZERO;
         List<DetallePedido> detallesPedidos = new ArrayList<>();
@@ -124,6 +133,8 @@ public class PedidoServiceImpl implements PedidoService {
                 .sede(sede)
                 .cliente(cliente)
                 .direccion(direccion)
+                .zonaDomicilio(zonaDomicilio)
+                .costoEnvio(zonaDomicilio.getPrecio())
                 .notasEntrega(request.getNotasEntrega())
                 .total(BigDecimal.ZERO) // Temporal, se actualiza después
                 .build();
@@ -165,8 +176,9 @@ public class PedidoServiceImpl implements PedidoService {
             detallesPedidos.add(detallePedido);
         }
 
-        // Actualizar total y detalles del pedido
-        savedPedido.setTotal(total);
+        // Actualizar total con costo de envío y detalles del pedido
+        BigDecimal totalConEnvio = total.add(zonaDomicilio.getPrecio());
+        savedPedido.setTotal(totalConEnvio);
         savedPedido.setDetalles(detallesPedidos);
         pedidoRepository.save(savedPedido);
 
@@ -180,7 +192,7 @@ public class PedidoServiceImpl implements PedidoService {
 
         return PedidoClienteResponseDTO.builder()
                 .pedidoId(savedPedido.getId())
-                .total(total)
+                .total(totalConEnvio)
                 .estado(savedPedido.getEstado().name())
                 .referenciaWompi(referencia)
                 .montoEnCentavos(montoCentavos)

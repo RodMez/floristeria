@@ -38,6 +38,14 @@ public class Pedido {
     @NotFound(action = NotFoundAction.IGNORE)
     private Direccion direccion;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "zona_domicilio_id")
+    @NotFound(action = NotFoundAction.IGNORE)
+    private ZonaDomicilio zonaDomicilio;
+
+    @Column(name = "costo_envio", precision = 19, scale = 4)
+    private BigDecimal costoEnvio;
+
     @Column(name = "notas_entrega")
     private String notasEntrega;
 
