@@ -20,4 +20,6 @@ public class SedeRequestDTO {
     private String instagramUrl;
 
     private String facebookUrl;
+
+    private String email;
 }
