@@ -34,7 +34,7 @@ public class Pedido {
     private Cliente cliente;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "direccion_id", nullable = false)
+    @JoinColumn(name = "direccion_id", nullable = true)
     @NotFound(action = NotFoundAction.IGNORE)
     private Direccion direccion;
 
