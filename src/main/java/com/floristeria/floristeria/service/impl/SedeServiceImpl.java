@@ -49,6 +49,7 @@ public class SedeServiceImpl implements SedeService {
         sede.setWhatsapp(requestDTO.getTelefonoWhatsapp());
         sede.setInstagramUrl(requestDTO.getInstagramUrl());
         sede.setFacebookUrl(requestDTO.getFacebookUrl());
+        sede.setEmail(requestDTO.getEmail());
 
         Sede sedeGuardada = sedeRepository.save(sede);
 
@@ -80,6 +81,7 @@ public class SedeServiceImpl implements SedeService {
         sede.setWhatsapp(requestDTO.getTelefonoWhatsapp());
         sede.setInstagramUrl(requestDTO.getInstagramUrl());
         sede.setFacebookUrl(requestDTO.getFacebookUrl());
+        sede.setEmail(requestDTO.getEmail());
 
         Sede sedeActualizada = sedeRepository.save(sede);
         return toResponseDTO(sedeActualizada);
@@ -114,6 +116,7 @@ public class SedeServiceImpl implements SedeService {
                 .telefonoWhatsapp(sede.getWhatsapp())
                 .instagramUrl(sede.getInstagramUrl())
                 .facebookUrl(sede.getFacebookUrl())
+                .email(sede.getEmail())
                 .build();
     }
 }
