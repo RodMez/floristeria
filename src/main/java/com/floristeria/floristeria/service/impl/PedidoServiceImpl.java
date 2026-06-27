@@ -117,12 +117,15 @@ public class PedidoServiceImpl implements PedidoService {
                     "La dirección de entrega debe estar en la misma ciudad que la sede de la tienda (" + sede.getCiudad() + ").");
         }
 
-        // Validar zona de domicilio
-        ZonaDomicilio zonaDomicilio = zonaDomicilioRepository.findById(request.getZonaDomicilioId())
-                .orElseThrow(() -> new EntityNotFoundException("Zona de domicilio no encontrada"));
+        // Obtener zona de domicilio desde la dirección del cliente
+        ZonaDomicilio zonaDomicilio = direccion.getZonaDomicilio();
+        if (zonaDomicilio == null) {
+            throw new IllegalArgumentException("La dirección no tiene una zona de domicilio asignada. Asigna una zona a tu dirección antes de crear un pedido.");
+        }
 
+        // Validar que la zona pertenece a la sede
         if (!zonaDomicilio.getSede().getId().equals(request.getSedeId())) {
-            throw new IllegalArgumentException("La zona de domicilio no pertenece a esta sede");
+            throw new IllegalArgumentException("La zona de domicilio de la dirección no pertenece a esta sede");
         }
 
         // Calcular total y validar stock desde Inventario
@@ -133,7 +136,6 @@ public class PedidoServiceImpl implements PedidoService {
                 .sede(sede)
                 .cliente(cliente)
                 .direccion(direccion)
-                .zonaDomicilio(zonaDomicilio)
                 .costoEnvio(zonaDomicilio.getPrecio())
                 .notasEntrega(request.getNotasEntrega())
                 .total(BigDecimal.ZERO) // Temporal, se actualiza después
@@ -302,6 +304,15 @@ public class PedidoServiceImpl implements PedidoService {
                 .estado(pedido.getEstado().name())
                 .transaccionId(pedido.getTransaccionId())
                 .creadoEn(pedido.getCreadoEn())
+                .costoEnvio(pedido.getCostoEnvio() != null ? pedido.getCostoEnvio() : BigDecimal.ZERO)
+                .zonaDomicilioNombre(
+                    direccion != null && direccion.getZonaDomicilio() != null
+                        ? direccion.getZonaDomicilio().getLocalidad()
+                          + (direccion.getZonaDomicilio().getBarrio() != null
+                              ? " - " + direccion.getZonaDomicilio().getBarrio()
+                              : "")
+                        : "Zona no especificada"
+                )
                 .build();
     }
 
@@ -466,6 +477,15 @@ public class PedidoServiceImpl implements PedidoService {
                 .metodoPago(pedido.getMetodoPago() != null ? pedido.getMetodoPago() : "No especificado")
                 .direccionEntrega(direccionEntrega)
                 .detalles(detalles)
+                .costoEnvio(pedido.getCostoEnvio() != null ? pedido.getCostoEnvio() : BigDecimal.ZERO)
+                .zonaDomicilioNombre(
+                    direccion != null && direccion.getZonaDomicilio() != null
+                        ? direccion.getZonaDomicilio().getLocalidad()
+                          + (direccion.getZonaDomicilio().getBarrio() != null
+                              ? " - " + direccion.getZonaDomicilio().getBarrio()
+                              : "")
+                        : "Zona no especificada"
+                )
                 .build();
     }
 }

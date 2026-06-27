@@ -22,6 +22,8 @@ public class PedidoHistorialDTO {
     private String metodoPago;
     private DireccionHistorialDTO direccionEntrega;
     private List<DetalleHistorialDTO> detalles;
+    private BigDecimal costoEnvio;
+    private String zonaDomicilioNombre;
 
     @Getter
     @Setter

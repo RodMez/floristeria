@@ -26,6 +26,8 @@ public class PedidoAdminResponseDTO {
     private String estado;
     private String transaccionId;
     private LocalDateTime creadoEn;
+    private BigDecimal costoEnvio;
+    private String zonaDomicilioNombre;
 
     @Getter
     @Setter

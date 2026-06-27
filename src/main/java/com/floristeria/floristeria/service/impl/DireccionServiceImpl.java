@@ -4,8 +4,10 @@ import com.floristeria.floristeria.dto.DireccionRequestDTO;
 import com.floristeria.floristeria.dto.DireccionResponseDTO;
 import com.floristeria.floristeria.entity.Cliente;
 import com.floristeria.floristeria.entity.Direccion;
+import com.floristeria.floristeria.entity.ZonaDomicilio;
 import com.floristeria.floristeria.repository.ClienteRepository;
 import com.floristeria.floristeria.repository.DireccionRepository;
+import com.floristeria.floristeria.repository.ZonaDomicilioRepository;
 import com.floristeria.floristeria.service.DireccionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ public class DireccionServiceImpl implements DireccionService {
 
     private final DireccionRepository direccionRepository;
     private final ClienteRepository clienteRepository;
+    private final ZonaDomicilioRepository zonaDomicilioRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -43,12 +46,16 @@ public class DireccionServiceImpl implements DireccionService {
         Cliente cliente = clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new EntityNotFoundException("Cliente no encontrado"));
 
+        ZonaDomicilio zonaDomicilio = zonaDomicilioRepository.findById(request.getZonaDomicilioId())
+                .orElseThrow(() -> new EntityNotFoundException("Zona de domicilio no encontrada"));
+
         Direccion direccion = Direccion.builder()
                 .cliente(cliente)
                 .alias(request.getAlias())
                 .direccion(request.getDireccion())
                 .ciudad(request.getCiudad())
                 .detalles(request.getDetalles())
+                .zonaDomicilio(zonaDomicilio)
                 .build();
 
         Direccion savedDireccion = direccionRepository.save(direccion);
@@ -65,9 +72,13 @@ public class DireccionServiceImpl implements DireccionService {
             throw new AccessDeniedException("No tienes permiso para editar esta dirección");
         }
 
+        ZonaDomicilio zonaDomicilio = zonaDomicilioRepository.findById(request.getZonaDomicilioId())
+                .orElseThrow(() -> new EntityNotFoundException("Zona de domicilio no encontrada"));
+
         direccion.setAlias(request.getAlias());
         direccion.setDireccion(request.getDireccion());
         direccion.setDetalles(request.getDetalles());
+        direccion.setZonaDomicilio(zonaDomicilio);
 
         direccionRepository.save(direccion);
         return mapToResponseDTO(direccion);
@@ -94,6 +105,15 @@ public class DireccionServiceImpl implements DireccionService {
                 .direccion(direccion.getDireccion())
                 .ciudad(direccion.getCiudad())
                 .detalles(direccion.getDetalles())
+                .zonaDomicilioId(direccion.getZonaDomicilio() != null ? direccion.getZonaDomicilio().getId() : null)
+                .zonaDomicilioNombre(
+                    direccion.getZonaDomicilio() != null
+                        ? direccion.getZonaDomicilio().getLocalidad()
+                          + (direccion.getZonaDomicilio().getBarrio() != null
+                              ? " - " + direccion.getZonaDomicilio().getBarrio()
+                              : "")
+                        : null
+                )
                 .build();
     }
 }
