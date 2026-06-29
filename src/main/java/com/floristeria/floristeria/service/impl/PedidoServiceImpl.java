@@ -9,6 +9,7 @@ import com.floristeria.floristeria.dto.PedidoHistorialDTO;
 import com.floristeria.floristeria.dto.PedidoRequestDTO;
 import com.floristeria.floristeria.entity.*;
 import com.floristeria.floristeria.repository.*;
+import com.floristeria.floristeria.service.EmailService;
 import com.floristeria.floristeria.service.PedidoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +20,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.access.AccessDeniedException;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -38,6 +40,7 @@ public class PedidoServiceImpl implements PedidoService {
     private final DireccionRepository direccionRepository;
     private final InventarioRepository inventarioRepository;
     private final ZonaDomicilioRepository zonaDomicilioRepository;
+    private final EmailService emailService;
 
     @Value("${wompi.public-key}")
     private String wompiPublicKey;
@@ -161,16 +164,27 @@ public class PedidoServiceImpl implements PedidoService {
 
             Producto producto = inventario.getProducto();
 
-            // Usar precio del inventario (precio específico de la sede)
-            BigDecimal precioUnitario = inventario.getPrecio();
-            BigDecimal subtotal = precioUnitario.multiply(BigDecimal.valueOf(detalleRequest.getCantidad()));
+            // Calcular precio con descuento si aplica
+            BigDecimal precioBase = inventario.getPrecio();
+            Integer descuento = inventario.getDescuentoPorcentaje();
+            BigDecimal precioFinal;
+
+            if (descuento != null && descuento > 0) {
+                BigDecimal descuentoAmount = precioBase.multiply(new BigDecimal(descuento))
+                        .divide(new BigDecimal(100), 2, RoundingMode.HALF_UP);
+                precioFinal = precioBase.subtract(descuentoAmount);
+            } else {
+                precioFinal = precioBase;
+            }
+
+            BigDecimal subtotal = precioFinal.multiply(BigDecimal.valueOf(detalleRequest.getCantidad()));
             total = total.add(subtotal);
 
             DetallePedido detallePedido = DetallePedido.builder()
                     .pedido(savedPedido)
                     .producto(producto)
                     .cantidad(detalleRequest.getCantidad())
-                    .precioUnitario(precioUnitario)
+                    .precioUnitario(precioFinal)
                     .notaPersonalizacion(detalleRequest.getNotaPersonalizacion())
                     .build();
 
@@ -422,6 +436,8 @@ public class PedidoServiceImpl implements PedidoService {
         pedidoRepository.save(pedido);
 
         deducirInventario(pedido);
+
+        emailService.notificarNuevaVenta(pedido);
     }
 
     @Override
