@@ -20,6 +20,8 @@ public class ProductoCatalogoDTO {
     private String sku;
     private List<String> categoriasNombres;
     private BigDecimal precio;
+    private Integer descuentoPorcentaje;
+    private BigDecimal precioConDescuento;
     private Integer stock;
     private Boolean disponible;
 }

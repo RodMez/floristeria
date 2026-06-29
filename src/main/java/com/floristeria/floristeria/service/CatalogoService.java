@@ -1,5 +1,7 @@
 package com.floristeria.floristeria.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,6 +31,18 @@ public class CatalogoService {
                             .map(Categoria::getNombre)
                             .collect(Collectors.toList());
 
+                    Integer descuento = inv.getDescuentoPorcentaje();
+                    BigDecimal precioConDescuento;
+
+                    if (descuento != null && descuento > 0) {
+                        BigDecimal descuentoAmount = inv.getPrecio()
+                                .multiply(new BigDecimal(descuento))
+                                .divide(new BigDecimal(100), 2, RoundingMode.HALF_UP);
+                        precioConDescuento = inv.getPrecio().subtract(descuentoAmount);
+                    } else {
+                        precioConDescuento = inv.getPrecio();
+                    }
+
                     return ProductoCatalogoDTO.builder()
                             .productoId(producto.getId())
                             .nombre(producto.getNombre())
@@ -36,8 +50,9 @@ public class CatalogoService {
                             .imagenUrl(producto.getImagenUrl())
                             .sku(producto.getSku())
                             .categoriasNombres(categoriasNombres)
-                            // 2. Convertimos el Double de la entidad al BigDecimal del DTO
                             .precio(inv.getPrecio())
+                            .descuentoPorcentaje(descuento)
+                            .precioConDescuento(precioConDescuento)
                             .stock(inv.getStock())
                             .disponible(true)
                             .build();
