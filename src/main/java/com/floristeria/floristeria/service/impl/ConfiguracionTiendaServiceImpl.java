@@ -16,7 +16,7 @@ public class ConfiguracionTiendaServiceImpl implements ConfiguracionTiendaServic
     private static final Integer CONFIG_ID = 1;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public ConfiguracionTienda obtenerConfiguracion() {
         return configuracionRepository.findById(CONFIG_ID)
                 .orElseGet(() -> configuracionRepository.save(
