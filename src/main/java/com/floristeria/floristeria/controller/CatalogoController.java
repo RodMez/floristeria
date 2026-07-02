@@ -38,7 +38,7 @@ public class CatalogoController {
         return ResponseEntity.ok(detalle);
     }
 
-    @GetMapping(value = "/meta-feed.xml", produces = MediaType.APPLICATION_XML_VALUE)
+    @GetMapping(value = "/meta-feed", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity<String> generarMetaFeed() {
         String xml = catalogoService.generarMetaFeedXml();
         return ResponseEntity.ok()
