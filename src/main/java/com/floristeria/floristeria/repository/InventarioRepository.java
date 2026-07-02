@@ -46,4 +46,12 @@ public interface InventarioRepository extends JpaRepository<Inventario, Integer>
      */
     @Query("SELECT i FROM Inventario i JOIN i.producto p WHERE i.sede.id = :sedeId AND p.deletedAt IS NULL")
     List<Inventario> findActiveBySedeId(@Param("sedeId") Integer sedeId);
+
+    /**
+     * Lista inventarios disponibles para Meta Feed: activos globalmente, con stock > 0, disponibles.
+     */
+    @Query("SELECT i FROM Inventario i JOIN i.producto p " +
+           "WHERE i.disponible = true AND i.stock > 0 " +
+           "AND p.activoGlobal = true AND p.deletedAt IS NULL")
+    List<Inventario> findAvailableForFeed();
 }
