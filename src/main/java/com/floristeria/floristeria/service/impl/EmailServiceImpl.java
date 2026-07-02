@@ -2,7 +2,9 @@ package com.floristeria.floristeria.service.impl;
 
 import com.floristeria.floristeria.entity.ConfiguracionTienda;
 import com.floristeria.floristeria.entity.DetallePedido;
+import com.floristeria.floristeria.entity.Direccion;
 import com.floristeria.floristeria.entity.Pedido;
+import com.floristeria.floristeria.entity.ZonaDomicilio;
 import com.floristeria.floristeria.service.ConfiguracionTiendaService;
 import com.floristeria.floristeria.service.EmailService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.math.BigDecimal;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -112,13 +116,50 @@ public class EmailServiceImpl implements EmailService {
             for (DetallePedido detalle : pedido.getDetalles()) {
                 String nombreProducto = detalle.getProducto() != null
                         ? detalle.getProducto().getNombre() : "Producto eliminado";
+                String nota = detalle.getNotaPersonalizacion() != null
+                        ? detalle.getNotaPersonalizacion() : "N/A";
                 detallesHtml.append(String.format(
                         "<tr><td style='padding:8px;border:1px solid #ddd;'>%s</td>" +
                         "<td style='padding:8px;border:1px solid #ddd;text-align:center;'>%d</td>" +
-                        "<td style='padding:8px;border:1px solid #ddd;text-align:right;'>$%,.0f</td></tr>",
-                        nombreProducto, detalle.getCantidad(), detalle.getPrecioUnitario()));
+                        "<td style='padding:8px;border:1px solid #ddd;text-align:right;'>$%,.0f</td>" +
+                        "<td style='padding:8px;border:1px solid #ddd;'>%s</td></tr>",
+                        nombreProducto, detalle.getCantidad(), detalle.getPrecioUnitario(), nota));
             }
         }
+
+        String fechaFormateada = pedido.getCreadoEn() != null
+                ? pedido.getCreadoEn().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                : "Fecha no disponible";
+
+        String direccionHtml;
+        if (pedido.getDireccion() != null) {
+            Direccion d = pedido.getDireccion();
+            String detalles = d.getDetalles() != null ? d.getDetalles() : "Sin detalles adicionales";
+            direccionHtml = """
+                    <h3>Dirección de entrega:</h3>
+                    <ul style="list-style:none;padding:0;">
+                        <li><strong>Alias:</strong> %s</li>
+                        <li><strong>Dirección:</strong> %s</li>
+                        <li><strong>Ciudad:</strong> %s</li>
+                        <li><strong>Detalles:</strong> %s</li>
+                    </ul>
+                    """.formatted(d.getAlias(), d.getDireccion(), d.getCiudad(), detalles);
+        } else {
+            direccionHtml = "<p><em>Dirección no disponible</em></p>";
+        }
+
+        String notasEntregaHtml = "";
+        if (pedido.getNotasEntrega() != null && !pedido.getNotasEntrega().isBlank()) {
+            notasEntregaHtml = "<p><strong>Notas de entrega:</strong> " + pedido.getNotasEntrega() + "</p>";
+        }
+
+        String zonaEnvio = "N/A";
+        if (pedido.getDireccion() != null && pedido.getDireccion().getZonaDomicilio() != null) {
+            ZonaDomicilio zona = pedido.getDireccion().getZonaDomicilio();
+            zonaEnvio = zona.getLocalidad()
+                    + (zona.getBarrio() != null ? " - " + zona.getBarrio() : "");
+        }
+        BigDecimal costoEnvio = pedido.getCostoEnvio() != null ? pedido.getCostoEnvio() : BigDecimal.ZERO;
 
         return """
                 <html>
@@ -129,6 +170,9 @@ public class EmailServiceImpl implements EmailService {
                     <div style="padding:20px;">
                         <p>Hola <strong>%s</strong>,</p>
                         <p>Tu pedido <strong>#%d</strong> ha sido confirmado y el pago procesado exitosamente.</p>
+                        <p><strong>Fecha:</strong> %s</p>
+                        %s
+                        %s
                         <h3>Detalles del pedido:</h3>
                         <table style="width:100%%;border-collapse:collapse;">
                             <thead>
@@ -136,11 +180,13 @@ public class EmailServiceImpl implements EmailService {
                                     <th style="padding:8px;border:1px solid #ddd;text-align:left;">Producto</th>
                                     <th style="padding:8px;border:1px solid #ddd;text-align:center;">Cantidad</th>
                                     <th style="padding:8px;border:1px solid #ddd;text-align:right;">Precio</th>
+                                    <th style="padding:8px;border:1px solid #ddd;text-align:left;">Notas</th>
                                 </tr>
                             </thead>
                             <tbody>%s</tbody>
                         </table>
                         <hr style="margin:20px 0;">
+                        <p style="text-align:right;color:#555;">Costo de Envío (Zona: %s): $%,.0f</p>
                         <p style="text-align:right;font-size:18px;"><strong>Total: $%,.0f</strong></p>
                         <p style="color:#666;">Método de pago: %s</p>
                         <p style="color:#666;">Referencia: %s</p>
@@ -153,7 +199,11 @@ public class EmailServiceImpl implements EmailService {
                 """.formatted(
                 pedido.getCliente().getNombre(),
                 pedido.getId(),
+                fechaFormateada,
+                direccionHtml,
+                notasEntregaHtml,
                 detallesHtml,
+                zonaEnvio, costoEnvio,
                 pedido.getTotal(),
                 pedido.getMetodoPago() != null ? pedido.getMetodoPago() : "No especificado",
                 pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A"
@@ -170,13 +220,50 @@ public class EmailServiceImpl implements EmailService {
             for (DetallePedido detalle : pedido.getDetalles()) {
                 String nombreProducto = detalle.getProducto() != null
                         ? detalle.getProducto().getNombre() : "Producto eliminado";
+                String nota = detalle.getNotaPersonalizacion() != null
+                        ? detalle.getNotaPersonalizacion() : "N/A";
                 detallesHtml.append(String.format(
                         "<tr><td style='padding:8px;border:1px solid #ddd;'>%s</td>" +
                         "<td style='padding:8px;border:1px solid #ddd;text-align:center;'>%d</td>" +
-                        "<td style='padding:8px;border:1px solid #ddd;text-align:right;'>$%,.0f</td></tr>",
-                        nombreProducto, detalle.getCantidad(), detalle.getPrecioUnitario()));
+                        "<td style='padding:8px;border:1px solid #ddd;text-align:right;'>$%,.0f</td>" +
+                        "<td style='padding:8px;border:1px solid #ddd;'>%s</td></tr>",
+                        nombreProducto, detalle.getCantidad(), detalle.getPrecioUnitario(), nota));
             }
         }
+
+        String fechaFormateada = pedido.getCreadoEn() != null
+                ? pedido.getCreadoEn().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                : "Fecha no disponible";
+
+        String direccionHtml;
+        if (pedido.getDireccion() != null) {
+            Direccion d = pedido.getDireccion();
+            String detalles = d.getDetalles() != null ? d.getDetalles() : "Sin detalles adicionales";
+            direccionHtml = """
+                    <h3>Dirección de entrega:</h3>
+                    <ul style="list-style:none;padding:0;">
+                        <li><strong>Alias:</strong> %s</li>
+                        <li><strong>Dirección:</strong> %s</li>
+                        <li><strong>Ciudad:</strong> %s</li>
+                        <li><strong>Detalles:</strong> %s</li>
+                    </ul>
+                    """.formatted(d.getAlias(), d.getDireccion(), d.getCiudad(), detalles);
+        } else {
+            direccionHtml = "<p><em>Dirección no disponible</em></p>";
+        }
+
+        String notasEntregaHtml = "";
+        if (pedido.getNotasEntrega() != null && !pedido.getNotasEntrega().isBlank()) {
+            notasEntregaHtml = "<p><strong>Notas de entrega:</strong> " + pedido.getNotasEntrega() + "</p>";
+        }
+
+        String zonaEnvio = "N/A";
+        if (pedido.getDireccion() != null && pedido.getDireccion().getZonaDomicilio() != null) {
+            ZonaDomicilio zona = pedido.getDireccion().getZonaDomicilio();
+            zonaEnvio = zona.getLocalidad()
+                    + (zona.getBarrio() != null ? " - " + zona.getBarrio() : "");
+        }
+        BigDecimal costoEnvio = pedido.getCostoEnvio() != null ? pedido.getCostoEnvio() : BigDecimal.ZERO;
 
         return """
                 <html>
@@ -187,6 +274,7 @@ public class EmailServiceImpl implements EmailService {
                     <div style="padding:20px;">
                         <p>Se ha registrado una <strong>nueva venta</strong> en tu sede.</p>
                         <h3>Pedido #%d</h3>
+                        <p><strong>Fecha:</strong> %s</p>
                         <ul style="list-style:none;padding:0;">
                             <li><strong>Cliente:</strong> %s</li>
                             <li><strong>Email:</strong> %s</li>
@@ -194,6 +282,8 @@ public class EmailServiceImpl implements EmailService {
                             <li><strong>Método de pago:</strong> %s</li>
                             <li><strong>Referencia:</strong> %s</li>
                         </ul>
+                        %s
+                        %s
                         <h3>Detalles:</h3>
                         <table style="width:100%%;border-collapse:collapse;">
                             <thead>
@@ -201,11 +291,13 @@ public class EmailServiceImpl implements EmailService {
                                     <th style="padding:8px;border:1px solid #ddd;text-align:left;">Producto</th>
                                     <th style="padding:8px;border:1px solid #ddd;text-align:center;">Cantidad</th>
                                     <th style="padding:8px;border:1px solid #ddd;text-align:right;">Precio</th>
+                                    <th style="padding:8px;border:1px solid #ddd;text-align:left;">Notas</th>
                                 </tr>
                             </thead>
                             <tbody>%s</tbody>
                         </table>
                         <hr style="margin:20px 0;">
+                        <p style="text-align:right;color:#555;">Costo de Envío (Zona: %s): $%,.0f</p>
                         <p style="text-align:right;font-size:18px;"><strong>Total: $%,.0f</strong></p>
                     </div>
                 </body>
@@ -213,19 +305,74 @@ public class EmailServiceImpl implements EmailService {
                 """.formatted(
                 pedido.getSede().getNombre(),
                 pedido.getId(),
+                fechaFormateada,
                 clienteNombre,
                 clienteEmail,
                 clienteTelefono,
                 pedido.getMetodoPago() != null ? pedido.getMetodoPago() : "No especificado",
                 pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A",
+                direccionHtml,
+                notasEntregaHtml,
                 detallesHtml,
+                zonaEnvio, costoEnvio,
                 pedido.getTotal()
         );
     }
 
     private String construirHtmlCopiaMaestro(Pedido pedido) {
-        String sedeNombre = pedido.getSede() != null ? pedido.getSede().getNombre() : "N/A";
         String clienteNombre = pedido.getCliente() != null ? pedido.getCliente().getNombre() : "N/A";
+        String clienteEmail = pedido.getCliente() != null ? pedido.getCliente().getEmail() : "N/A";
+        String clienteTelefono = pedido.getCliente() != null ? pedido.getCliente().getTelefono() : "N/A";
+
+        StringBuilder detallesHtml = new StringBuilder();
+        if (pedido.getDetalles() != null) {
+            for (DetallePedido detalle : pedido.getDetalles()) {
+                String nombreProducto = detalle.getProducto() != null
+                        ? detalle.getProducto().getNombre() : "Producto eliminado";
+                String nota = detalle.getNotaPersonalizacion() != null
+                        ? detalle.getNotaPersonalizacion() : "N/A";
+                detallesHtml.append(String.format(
+                        "<tr><td style='padding:8px;border:1px solid #ddd;'>%s</td>" +
+                        "<td style='padding:8px;border:1px solid #ddd;text-align:center;'>%d</td>" +
+                        "<td style='padding:8px;border:1px solid #ddd;text-align:right;'>$%,.0f</td>" +
+                        "<td style='padding:8px;border:1px solid #ddd;'>%s</td></tr>",
+                        nombreProducto, detalle.getCantidad(), detalle.getPrecioUnitario(), nota));
+            }
+        }
+
+        String fechaFormateada = pedido.getCreadoEn() != null
+                ? pedido.getCreadoEn().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                : "Fecha no disponible";
+
+        String direccionHtml;
+        if (pedido.getDireccion() != null) {
+            Direccion d = pedido.getDireccion();
+            String detalles = d.getDetalles() != null ? d.getDetalles() : "Sin detalles adicionales";
+            direccionHtml = """
+                    <h3>Dirección de entrega:</h3>
+                    <ul style="list-style:none;padding:0;">
+                        <li><strong>Alias:</strong> %s</li>
+                        <li><strong>Dirección:</strong> %s</li>
+                        <li><strong>Ciudad:</strong> %s</li>
+                        <li><strong>Detalles:</strong> %s</li>
+                    </ul>
+                    """.formatted(d.getAlias(), d.getDireccion(), d.getCiudad(), detalles);
+        } else {
+            direccionHtml = "<p><em>Dirección no disponible</em></p>";
+        }
+
+        String notasEntregaHtml = "";
+        if (pedido.getNotasEntrega() != null && !pedido.getNotasEntrega().isBlank()) {
+            notasEntregaHtml = "<p><strong>Notas de entrega:</strong> " + pedido.getNotasEntrega() + "</p>";
+        }
+
+        String zonaEnvio = "N/A";
+        if (pedido.getDireccion() != null && pedido.getDireccion().getZonaDomicilio() != null) {
+            ZonaDomicilio zona = pedido.getDireccion().getZonaDomicilio();
+            zonaEnvio = zona.getLocalidad()
+                    + (zona.getBarrio() != null ? " - " + zona.getBarrio() : "");
+        }
+        BigDecimal costoEnvio = pedido.getCostoEnvio() != null ? pedido.getCostoEnvio() : BigDecimal.ZERO;
 
         return """
                 <html>
@@ -234,26 +381,50 @@ public class EmailServiceImpl implements EmailService {
                         <h1>Copia de Venta - Pedido #%d</h1>
                     </div>
                     <div style="padding:20px;">
-                        <p>Se ha registrado una nueva venta en el sistema.</p>
+                        <p>Se ha registrado una <strong>nueva venta</strong> en el sistema.</p>
+                        <h3>Pedido #%d</h3>
+                        <p><strong>Fecha:</strong> %s</p>
                         <ul style="list-style:none;padding:0;">
-                            <li><strong>Pedido:</strong> #%d</li>
-                            <li><strong>Sede:</strong> %s</li>
                             <li><strong>Cliente:</strong> %s</li>
-                            <li><strong>Total:</strong> $%,.0f</li>
-                            <li><strong>Estado:</strong> %s</li>
+                            <li><strong>Email:</strong> %s</li>
+                            <li><strong>Teléfono:</strong> %s</li>
+                            <li><strong>Método de pago:</strong> %s</li>
                             <li><strong>Referencia:</strong> %s</li>
                         </ul>
+                        %s
+                        %s
+                        <h3>Detalles:</h3>
+                        <table style="width:100%%;border-collapse:collapse;">
+                            <thead>
+                                <tr style="background-color:#f2f2f2;">
+                                    <th style="padding:8px;border:1px solid #ddd;text-align:left;">Producto</th>
+                                    <th style="padding:8px;border:1px solid #ddd;text-align:center;">Cantidad</th>
+                                    <th style="padding:8px;border:1px solid #ddd;text-align:right;">Precio</th>
+                                    <th style="padding:8px;border:1px solid #ddd;text-align:left;">Notas</th>
+                                </tr>
+                            </thead>
+                            <tbody>%s</tbody>
+                        </table>
+                        <hr style="margin:20px 0;">
+                        <p style="text-align:right;color:#555;">Costo de Envío (Zona: %s): $%,.0f</p>
+                        <p style="text-align:right;font-size:18px;"><strong>Total: $%,.0f</strong></p>
                     </div>
                 </body>
                 </html>
                 """.formatted(
                 pedido.getId(),
                 pedido.getId(),
-                sedeNombre,
+                fechaFormateada,
                 clienteNombre,
-                pedido.getTotal(),
-                pedido.getEstado() != null ? pedido.getEstado().name() : "N/A",
-                pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A"
+                clienteEmail,
+                clienteTelefono,
+                pedido.getMetodoPago() != null ? pedido.getMetodoPago() : "No especificado",
+                pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A",
+                direccionHtml,
+                notasEntregaHtml,
+                detallesHtml,
+                zonaEnvio, costoEnvio,
+                pedido.getTotal()
         );
     }
 }
