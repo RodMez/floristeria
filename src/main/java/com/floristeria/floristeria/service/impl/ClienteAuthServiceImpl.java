@@ -3,6 +3,7 @@ package com.floristeria.floristeria.service.impl;
 import com.floristeria.floristeria.dto.ClienteActualizarRequestDTO;
 import com.floristeria.floristeria.dto.ClienteAuthResponseDTO;
 import com.floristeria.floristeria.dto.ClienteLoginDTO;
+import com.floristeria.floristeria.dto.ClientePasswordRequestDTO;
 import com.floristeria.floristeria.dto.ClientePerfilResponseDTO;
 import com.floristeria.floristeria.dto.ClienteRegistroDTO;
 import com.floristeria.floristeria.entity.Cliente;
@@ -93,5 +94,19 @@ public class ClienteAuthServiceImpl implements ClienteAuthService {
                 .email(cliente.getEmail())
                 .telefono(cliente.getTelefono())
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public void cambiarPassword(Integer clienteId, ClientePasswordRequestDTO request) {
+        Cliente cliente = clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new EntityNotFoundException("Cliente no encontrado"));
+
+        if (!passwordEncoder.matches(request.getPasswordActual(), cliente.getPasswordHash())) {
+            throw new IllegalArgumentException("La contraseña actual es incorrecta");
+        }
+
+        cliente.setPasswordHash(passwordEncoder.encode(request.getNuevaPassword()));
+        clienteRepository.save(cliente);
     }
 }
