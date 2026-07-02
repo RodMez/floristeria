@@ -43,9 +43,11 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void notificarNuevaVenta(Pedido pedido) {
         try {
+            String nombreSede = pedido.getSede() != null ? pedido.getSede().getNombre() : "Sede no disponible";
+
             // 1. Correo al Cliente (Recibo de compra)
             if (pedido.getCliente() != null && pedido.getCliente().getEmail() != null) {
-                String asuntoCliente = "Recibo de tu compra - Pedido #" + pedido.getId();
+                String asuntoCliente = "Recibo de tu compra - " + nombreSede;
                 String htmlCliente = construirHtmlReciboCliente(pedido);
                 enviarCorreoBrevo(pedido.getCliente().getEmail(), pedido.getCliente().getNombre(),
                         asuntoCliente, htmlCliente);
@@ -54,7 +56,7 @@ public class EmailServiceImpl implements EmailService {
             // 2. Correo a la Sede (Nueva venta)
             if (pedido.getSede() != null && pedido.getSede().getEmail() != null
                     && !pedido.getSede().getEmail().isBlank()) {
-                String asuntoSede = "Nueva venta - Pedido #" + pedido.getId();
+                String asuntoSede = "¡NUEVA VENTA! - " + nombreSede;
                 String htmlSede = construirHtmlNuevaVenta(pedido);
                 enviarCorreoBrevo(pedido.getSede().getEmail(), pedido.getSede().getNombre(),
                         asuntoSede, htmlSede);
@@ -65,7 +67,7 @@ public class EmailServiceImpl implements EmailService {
             if (Boolean.TRUE.equals(config.getEnviarCopiaMaestro())
                     && config.getCorreoMaestro() != null
                     && !config.getCorreoMaestro().isBlank()) {
-                String asuntoMaestro = "Copia de venta - Pedido #" + pedido.getId();
+                String asuntoMaestro = "[COPIA MAESTRA] Venta - " + nombreSede;
                 String htmlMaestro = construirHtmlCopiaMaestro(pedido);
                 enviarCorreoBrevo(config.getCorreoMaestro(), "Administrador",
                         asuntoMaestro, htmlMaestro);
@@ -172,6 +174,8 @@ public class EmailServiceImpl implements EmailService {
                         <p>Tu pedido ha sido confirmado y el pago procesado exitosamente.</p>
                         <p><strong>Referencia de pago:</strong> %s</p>
                         <p><strong>Fecha:</strong> %s</p>
+                        <p><strong>Sede de despacho:</strong> %s</p>
+                        <p><strong>Método de pago:</strong> %s</p>
                         %s
                         %s
                         <h3>Detalles del pedido:</h3>
@@ -189,7 +193,6 @@ public class EmailServiceImpl implements EmailService {
                         <hr style="margin:20px 0;">
                         <p style="text-align:right;color:#555;">Costo de Envío (Zona: %s): $%,.0f</p>
                         <p style="text-align:right;font-size:18px;"><strong>Total: $%,.0f</strong></p>
-                        <p style="color:#666;">Método de pago: %s</p>
                     </div>
                     <div style="background-color:#f2f2f2;padding:10px;text-align:center;color:#666;">
                         <p>Gracias por tu compra</p>
@@ -200,12 +203,13 @@ public class EmailServiceImpl implements EmailService {
                 pedido.getCliente().getNombre(),
                 pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A",
                 fechaFormateada,
+                pedido.getSede().getNombre(),
+                pedido.getMetodoPago() != null ? pedido.getMetodoPago() : "No especificado",
                 direccionHtml,
                 notasEntregaHtml,
                 detallesHtml,
                 zonaEnvio, costoEnvio,
-                pedido.getTotal(),
-                pedido.getMetodoPago() != null ? pedido.getMetodoPago() : "No especificado"
+                pedido.getTotal()
         );
     }
 
@@ -274,11 +278,11 @@ public class EmailServiceImpl implements EmailService {
                         <p>Se ha registrado una <strong>nueva venta</strong> en tu sede.</p>
                         <h3>Referencia: %s</h3>
                         <p><strong>Fecha:</strong> %s</p>
+                        <p><strong>Método de pago:</strong> %s</p>
                         <ul style="list-style:none;padding:0;">
                             <li><strong>Cliente:</strong> %s</li>
                             <li><strong>Email:</strong> %s</li>
                             <li><strong>Teléfono:</strong> %s</li>
-                            <li><strong>Método de pago:</strong> %s</li>
                         </ul>
                         %s
                         %s
@@ -304,10 +308,10 @@ public class EmailServiceImpl implements EmailService {
                 pedido.getSede().getNombre(),
                 pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A",
                 fechaFormateada,
+                pedido.getMetodoPago() != null ? pedido.getMetodoPago() : "No especificado",
                 clienteNombre,
                 clienteEmail,
                 clienteTelefono,
-                pedido.getMetodoPago() != null ? pedido.getMetodoPago() : "No especificado",
                 direccionHtml,
                 notasEntregaHtml,
                 detallesHtml,
@@ -371,21 +375,24 @@ public class EmailServiceImpl implements EmailService {
         }
         BigDecimal costoEnvio = pedido.getCostoEnvio() != null ? pedido.getCostoEnvio() : BigDecimal.ZERO;
 
+        String nombreSede = pedido.getSede() != null ? pedido.getSede().getNombre() : "Sede no disponible";
+
         return """
                 <html>
                 <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
                     <div style="background-color:#9C27B0;color:white;padding:20px;text-align:center;">
-                        <h1>Copia de Venta - Referencia: %s</h1>
+                        <h1>[COPIA MAESTRA] - %s</h1>
                     </div>
                     <div style="padding:20px;">
+                        <p style="font-size:16px;"><strong>Sede:</strong> %s</p>
                         <p>Se ha registrado una <strong>nueva venta</strong> en el sistema.</p>
                         <h3>Referencia: %s</h3>
                         <p><strong>Fecha:</strong> %s</p>
+                        <p><strong>Método de pago:</strong> %s</p>
                         <ul style="list-style:none;padding:0;">
                             <li><strong>Cliente:</strong> %s</li>
                             <li><strong>Email:</strong> %s</li>
                             <li><strong>Teléfono:</strong> %s</li>
-                            <li><strong>Método de pago:</strong> %s</li>
                         </ul>
                         %s
                         %s
@@ -408,13 +415,14 @@ public class EmailServiceImpl implements EmailService {
                 </body>
                 </html>
                 """.formatted(
-                pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A",
+                nombreSede,
+                nombreSede,
                 pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A",
                 fechaFormateada,
+                pedido.getMetodoPago() != null ? pedido.getMetodoPago() : "No especificado",
                 clienteNombre,
                 clienteEmail,
                 clienteTelefono,
-                pedido.getMetodoPago() != null ? pedido.getMetodoPago() : "No especificado",
                 direccionHtml,
                 notasEntregaHtml,
                 detallesHtml,
