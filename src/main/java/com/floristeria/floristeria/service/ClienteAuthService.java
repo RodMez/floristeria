@@ -13,6 +13,8 @@ public interface ClienteAuthService {
 
     ClienteAuthResponseDTO login(ClienteLoginDTO request);
 
+    ClientePerfilResponseDTO obtenerPerfil(Integer clienteId);
+
     ClientePerfilResponseDTO actualizarPerfil(Integer clienteId, ClienteActualizarRequestDTO request);
 
     void cambiarPassword(Integer clienteId, ClientePasswordRequestDTO request);
