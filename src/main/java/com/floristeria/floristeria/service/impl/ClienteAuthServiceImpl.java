@@ -79,6 +79,20 @@ public class ClienteAuthServiceImpl implements ClienteAuthService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public ClientePerfilResponseDTO obtenerPerfil(Integer clienteId) {
+        Cliente cliente = clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new EntityNotFoundException("Cliente no encontrado"));
+
+        return ClientePerfilResponseDTO.builder()
+                .id(cliente.getId())
+                .nombre(cliente.getNombre())
+                .email(cliente.getEmail())
+                .telefono(cliente.getTelefono())
+                .build();
+    }
+
+    @Override
     @Transactional
     public ClientePerfilResponseDTO actualizarPerfil(Integer clienteId, ClienteActualizarRequestDTO request) {
         Cliente cliente = clienteRepository.findById(clienteId)

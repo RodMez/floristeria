@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,6 +24,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class ClientePerfilController {
 
     private final ClienteAuthService clienteAuthService;
+
+    @GetMapping
+    public ResponseEntity<ClientePerfilResponseDTO> obtenerPerfil(
+            @AuthenticationPrincipal ClienteDetails clienteDetails) {
+        ClientePerfilResponseDTO response = clienteAuthService.obtenerPerfil(clienteDetails.getClienteId());
+        return ResponseEntity.ok(response);
+    }
 
     @PutMapping
     public ResponseEntity<ClientePerfilResponseDTO> actualizarPerfil(
