@@ -169,7 +169,8 @@ public class EmailServiceImpl implements EmailService {
                     </div>
                     <div style="padding:20px;">
                         <p>Hola <strong>%s</strong>,</p>
-                        <p>Tu pedido <strong>#%d</strong> ha sido confirmado y el pago procesado exitosamente.</p>
+                        <p>Tu pedido ha sido confirmado y el pago procesado exitosamente.</p>
+                        <p><strong>Referencia de pago:</strong> %s</p>
                         <p><strong>Fecha:</strong> %s</p>
                         %s
                         %s
@@ -189,7 +190,6 @@ public class EmailServiceImpl implements EmailService {
                         <p style="text-align:right;color:#555;">Costo de Envío (Zona: %s): $%,.0f</p>
                         <p style="text-align:right;font-size:18px;"><strong>Total: $%,.0f</strong></p>
                         <p style="color:#666;">Método de pago: %s</p>
-                        <p style="color:#666;">Referencia: %s</p>
                     </div>
                     <div style="background-color:#f2f2f2;padding:10px;text-align:center;color:#666;">
                         <p>Gracias por tu compra</p>
@@ -198,15 +198,14 @@ public class EmailServiceImpl implements EmailService {
                 </html>
                 """.formatted(
                 pedido.getCliente().getNombre(),
-                pedido.getId(),
+                pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A",
                 fechaFormateada,
                 direccionHtml,
                 notasEntregaHtml,
                 detallesHtml,
                 zonaEnvio, costoEnvio,
                 pedido.getTotal(),
-                pedido.getMetodoPago() != null ? pedido.getMetodoPago() : "No especificado",
-                pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A"
+                pedido.getMetodoPago() != null ? pedido.getMetodoPago() : "No especificado"
         );
     }
 
@@ -273,14 +272,13 @@ public class EmailServiceImpl implements EmailService {
                     </div>
                     <div style="padding:20px;">
                         <p>Se ha registrado una <strong>nueva venta</strong> en tu sede.</p>
-                        <h3>Pedido #%d</h3>
+                        <h3>Referencia: %s</h3>
                         <p><strong>Fecha:</strong> %s</p>
                         <ul style="list-style:none;padding:0;">
                             <li><strong>Cliente:</strong> %s</li>
                             <li><strong>Email:</strong> %s</li>
                             <li><strong>Teléfono:</strong> %s</li>
                             <li><strong>Método de pago:</strong> %s</li>
-                            <li><strong>Referencia:</strong> %s</li>
                         </ul>
                         %s
                         %s
@@ -304,13 +302,12 @@ public class EmailServiceImpl implements EmailService {
                 </html>
                 """.formatted(
                 pedido.getSede().getNombre(),
-                pedido.getId(),
+                pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A",
                 fechaFormateada,
                 clienteNombre,
                 clienteEmail,
                 clienteTelefono,
                 pedido.getMetodoPago() != null ? pedido.getMetodoPago() : "No especificado",
-                pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A",
                 direccionHtml,
                 notasEntregaHtml,
                 detallesHtml,
@@ -378,18 +375,17 @@ public class EmailServiceImpl implements EmailService {
                 <html>
                 <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
                     <div style="background-color:#9C27B0;color:white;padding:20px;text-align:center;">
-                        <h1>Copia de Venta - Pedido #%d</h1>
+                        <h1>Copia de Venta - Referencia: %s</h1>
                     </div>
                     <div style="padding:20px;">
                         <p>Se ha registrado una <strong>nueva venta</strong> en el sistema.</p>
-                        <h3>Pedido #%d</h3>
+                        <h3>Referencia: %s</h3>
                         <p><strong>Fecha:</strong> %s</p>
                         <ul style="list-style:none;padding:0;">
                             <li><strong>Cliente:</strong> %s</li>
                             <li><strong>Email:</strong> %s</li>
                             <li><strong>Teléfono:</strong> %s</li>
                             <li><strong>Método de pago:</strong> %s</li>
-                            <li><strong>Referencia:</strong> %s</li>
                         </ul>
                         %s
                         %s
@@ -412,14 +408,13 @@ public class EmailServiceImpl implements EmailService {
                 </body>
                 </html>
                 """.formatted(
-                pedido.getId(),
-                pedido.getId(),
+                pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A",
+                pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A",
                 fechaFormateada,
                 clienteNombre,
                 clienteEmail,
                 clienteTelefono,
                 pedido.getMetodoPago() != null ? pedido.getMetodoPago() : "No especificado",
-                pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A",
                 direccionHtml,
                 notasEntregaHtml,
                 detallesHtml,
