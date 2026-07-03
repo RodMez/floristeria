@@ -11,6 +11,7 @@ import com.floristeria.floristeria.repository.ProductoRepository;
 import com.floristeria.floristeria.repository.SedeRepository;
 import com.floristeria.floristeria.repository.UsuarioAdminRepository;
 import com.floristeria.floristeria.service.SedeService;
+import com.floristeria.floristeria.util.StringUtil;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -44,8 +45,8 @@ public class SedeServiceImpl implements SedeService {
     public SedeResponseDTO crearSede(SedeRequestDTO requestDTO) {
         // 1. Crear y guardar la nueva sede
         Sede sede = new Sede();
-        sede.setNombre(requestDTO.getNombre());
-        sede.setCiudad(requestDTO.getCiudad());
+        sede.setNombre(StringUtil.capitalize(requestDTO.getNombre()));
+        sede.setCiudad(StringUtil.capitalize(requestDTO.getCiudad()));
         sede.setWhatsapp(requestDTO.getTelefonoWhatsapp());
         sede.setInstagramUrl(requestDTO.getInstagramUrl());
         sede.setFacebookUrl(requestDTO.getFacebookUrl());
@@ -76,8 +77,8 @@ public class SedeServiceImpl implements SedeService {
         Sede sede = sedeRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Sede no encontrada con id: " + id));
 
-        sede.setNombre(requestDTO.getNombre());
-        sede.setCiudad(requestDTO.getCiudad());
+        sede.setNombre(StringUtil.capitalize(requestDTO.getNombre()));
+        sede.setCiudad(StringUtil.capitalize(requestDTO.getCiudad()));
         sede.setWhatsapp(requestDTO.getTelefonoWhatsapp());
         sede.setInstagramUrl(requestDTO.getInstagramUrl());
         sede.setFacebookUrl(requestDTO.getFacebookUrl());

@@ -7,6 +7,7 @@ import com.floristeria.floristeria.exception.AccesoDenegadoSedeException;
 import com.floristeria.floristeria.repository.SedeRepository;
 import com.floristeria.floristeria.repository.ZonaDomicilioRepository;
 import com.floristeria.floristeria.service.ZonaDomicilioService;
+import com.floristeria.floristeria.util.StringUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -47,10 +48,13 @@ public class ZonaDomicilioServiceImpl implements ZonaDomicilioService {
         Sede sede = sedeRepository.findById(request.getSedeId())
                 .orElseThrow(() -> new EntityNotFoundException("Sede no encontrada con id: " + request.getSedeId()));
 
+        String localidad = StringUtil.capitalize(request.getLocalidad());
+        String barrio = StringUtil.capitalize(request.getBarrio());
+
         ZonaDomicilio zona = ZonaDomicilio.builder()
                 .sede(sede)
-                .localidad(request.getLocalidad())
-                .barrio(request.getBarrio())
+                .localidad(localidad)
+                .barrio(barrio)
                 .precio(request.getPrecio())
                 .build();
 
@@ -66,9 +70,12 @@ public class ZonaDomicilioServiceImpl implements ZonaDomicilioService {
         Sede sede = sedeRepository.findById(request.getSedeId())
                 .orElseThrow(() -> new EntityNotFoundException("Sede no encontrada con id: " + request.getSedeId()));
 
+        String localidad = StringUtil.capitalize(request.getLocalidad());
+        String barrio = StringUtil.capitalize(request.getBarrio());
+
         zona.setSede(sede);
-        zona.setLocalidad(request.getLocalidad());
-        zona.setBarrio(request.getBarrio());
+        zona.setLocalidad(localidad);
+        zona.setBarrio(barrio);
         zona.setPrecio(request.getPrecio());
 
         zona = zonaDomicilioRepository.save(zona);
@@ -89,10 +96,13 @@ public class ZonaDomicilioServiceImpl implements ZonaDomicilioService {
         Sede sede = sedeRepository.findById(sedeId)
                 .orElseThrow(() -> new EntityNotFoundException("Sede no encontrada con id: " + sedeId));
 
+        String localidad = StringUtil.capitalize(request.getLocalidad());
+        String barrio = StringUtil.capitalize(request.getBarrio());
+
         ZonaDomicilio zona = ZonaDomicilio.builder()
                 .sede(sede)
-                .localidad(request.getLocalidad())
-                .barrio(request.getBarrio())
+                .localidad(localidad)
+                .barrio(barrio)
                 .precio(request.getPrecio())
                 .build();
 
@@ -109,8 +119,11 @@ public class ZonaDomicilioServiceImpl implements ZonaDomicilioService {
             throw new AccesoDenegadoSedeException("No tiene permisos para modificar zonas de otra sede");
         }
 
-        zona.setLocalidad(request.getLocalidad());
-        zona.setBarrio(request.getBarrio());
+        String localidad = StringUtil.capitalize(request.getLocalidad());
+        String barrio = StringUtil.capitalize(request.getBarrio());
+
+        zona.setLocalidad(localidad);
+        zona.setBarrio(barrio);
         zona.setPrecio(request.getPrecio());
 
         zona = zonaDomicilioRepository.save(zona);
