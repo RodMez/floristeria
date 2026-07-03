@@ -9,6 +9,7 @@ import com.floristeria.floristeria.repository.ClienteRepository;
 import com.floristeria.floristeria.repository.DireccionRepository;
 import com.floristeria.floristeria.repository.ZonaDomicilioRepository;
 import com.floristeria.floristeria.service.DireccionService;
+import com.floristeria.floristeria.util.StringUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,12 +50,17 @@ public class DireccionServiceImpl implements DireccionService {
         ZonaDomicilio zonaDomicilio = zonaDomicilioRepository.findById(request.getZonaDomicilioId())
                 .orElseThrow(() -> new EntityNotFoundException("Zona de domicilio no encontrada"));
 
+        String alias = StringUtil.capitalize(request.getAlias());
+        String direccionStr = StringUtil.capitalize(request.getDireccion());
+        String ciudad = StringUtil.capitalize(request.getCiudad());
+        String detalles = StringUtil.capitalize(request.getDetalles());
+
         Direccion direccion = Direccion.builder()
                 .cliente(cliente)
-                .alias(request.getAlias())
-                .direccion(request.getDireccion())
-                .ciudad(request.getCiudad())
-                .detalles(request.getDetalles())
+                .alias(alias)
+                .direccion(direccionStr)
+                .ciudad(ciudad)
+                .detalles(detalles)
                 .zonaDomicilio(zonaDomicilio)
                 .build();
 
@@ -75,9 +81,13 @@ public class DireccionServiceImpl implements DireccionService {
         ZonaDomicilio zonaDomicilio = zonaDomicilioRepository.findById(request.getZonaDomicilioId())
                 .orElseThrow(() -> new EntityNotFoundException("Zona de domicilio no encontrada"));
 
-        direccion.setAlias(request.getAlias());
-        direccion.setDireccion(request.getDireccion());
-        direccion.setDetalles(request.getDetalles());
+        String alias = StringUtil.capitalize(request.getAlias());
+        String direccionStr = StringUtil.capitalize(request.getDireccion());
+        String detalles = StringUtil.capitalize(request.getDetalles());
+
+        direccion.setAlias(alias);
+        direccion.setDireccion(direccionStr);
+        direccion.setDetalles(detalles);
         direccion.setZonaDomicilio(zonaDomicilio);
 
         direccionRepository.save(direccion);
