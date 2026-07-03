@@ -172,6 +172,7 @@ public class EmailServiceImpl implements EmailService {
                     <div style="padding:20px;">
                         <p>Hola <strong>%s</strong>,</p>
                         <p>Tu pedido ha sido confirmado y el pago procesado exitosamente.</p>
+                        <p><strong>Pedido:</strong> %s</p>
                         <p><strong>Referencia de pago:</strong> %s</p>
                         <p><strong>Fecha:</strong> %s</p>
                         <p><strong>Sede de despacho:</strong> %s</p>
@@ -201,6 +202,7 @@ public class EmailServiceImpl implements EmailService {
                 </html>
                 """.formatted(
                 pedido.getCliente().getNombre(),
+                pedido.getCodigo() != null ? pedido.getCodigo() : "N/A",
                 pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A",
                 fechaFormateada,
                 pedido.getSede().getNombre(),
@@ -276,7 +278,8 @@ public class EmailServiceImpl implements EmailService {
                     </div>
                     <div style="padding:20px;">
                         <p>Se ha registrado una <strong>nueva venta</strong> en tu sede.</p>
-                        <h3>Referencia: %s</h3>
+                        <h3>Pedido: %s</h3>
+                        <p><strong>Referencia de pago:</strong> %s</p>
                         <p><strong>Fecha:</strong> %s</p>
                         <p><strong>Método de pago:</strong> %s</p>
                         <ul style="list-style:none;padding:0;">
@@ -306,6 +309,7 @@ public class EmailServiceImpl implements EmailService {
                 </html>
                 """.formatted(
                 pedido.getSede().getNombre(),
+                pedido.getCodigo() != null ? pedido.getCodigo() : "N/A",
                 pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A",
                 fechaFormateada,
                 pedido.getMetodoPago() != null ? pedido.getMetodoPago() : "No especificado",
@@ -381,12 +385,13 @@ public class EmailServiceImpl implements EmailService {
                 <html>
                 <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
                     <div style="background-color:#9C27B0;color:white;padding:20px;text-align:center;">
-                        <h1>[COPIA MAESTRA] - %s</h1>
+                        <h1>NUEVA VENTA - %s</h1>
                     </div>
                     <div style="padding:20px;">
                         <p style="font-size:16px;"><strong>Sede:</strong> %s</p>
                         <p>Se ha registrado una <strong>nueva venta</strong> en el sistema.</p>
-                        <h3>Referencia: %s</h3>
+                        <h3>Pedido: %s</h3>
+                        <p><strong>Referencia de pago:</strong> %s</p>
                         <p><strong>Fecha:</strong> %s</p>
                         <p><strong>Método de pago:</strong> %s</p>
                         <ul style="list-style:none;padding:0;">
@@ -417,6 +422,7 @@ public class EmailServiceImpl implements EmailService {
                 """.formatted(
                 nombreSede,
                 nombreSede,
+                pedido.getCodigo() != null ? pedido.getCodigo() : "N/A",
                 pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A",
                 fechaFormateada,
                 pedido.getMetodoPago() != null ? pedido.getMetodoPago() : "No especificado",
