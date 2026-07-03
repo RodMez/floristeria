@@ -67,7 +67,7 @@ public class EmailServiceImpl implements EmailService {
             if (Boolean.TRUE.equals(config.getEnviarCopiaMaestro())
                     && config.getCorreoMaestro() != null
                     && !config.getCorreoMaestro().isBlank()) {
-                String asuntoMaestro = "[COPIA MAESTRA] Venta - " + nombreSede;
+                String asuntoMaestro = "¡NUEVA VENTA! - " + nombreSede;
                 String htmlMaestro = construirHtmlCopiaMaestro(pedido);
                 enviarCorreoBrevo(config.getCorreoMaestro(), "Administrador",
                         asuntoMaestro, htmlMaestro);
