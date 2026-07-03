@@ -198,7 +198,7 @@ public class PedidoServiceImpl implements PedidoService {
         savedPedido.setDetalles(detallesPedidos);
         pedidoRepository.save(savedPedido);
 
-        String referencia = savedPedido.getId() + "-" + System.currentTimeMillis();
+        String referencia = savedPedido.getCodigo() + "-" + System.currentTimeMillis();
         savedPedido.setReferenciaPago(referencia);
         pedidoRepository.save(savedPedido);
 
@@ -207,7 +207,7 @@ public class PedidoServiceImpl implements PedidoService {
         String firmaIntegridad = generarSha256Hex(cadena);
 
         return PedidoClienteResponseDTO.builder()
-                .pedidoId(savedPedido.getId())
+                .pedidoId(savedPedido.getCodigo())
                 .total(totalConEnvio)
                 .estado(savedPedido.getEstado().name())
                 .referenciaWompi(referencia)
@@ -248,8 +248,8 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Transactional
     @Override
-    public PedidoAdminResponseDTO actualizarEstadoPedido(Integer pedidoId, EstadoPedido nuevoEstado, Integer usuarioSedeId, String rol) {
-        Pedido pedido = pedidoRepository.findById(pedidoId)
+    public PedidoAdminResponseDTO actualizarEstadoPedido(String pedidoCodigo, EstadoPedido nuevoEstado, Integer usuarioSedeId, String rol) {
+        Pedido pedido = pedidoRepository.findByCodigo(pedidoCodigo)
                 .orElseThrow(() -> new EntityNotFoundException("Pedido no encontrado"));
 
         if (!"SUPERADMIN".equals(rol) && !pedido.getSede().getId().equals(usuarioSedeId)) {
@@ -305,7 +305,7 @@ public class PedidoServiceImpl implements PedidoService {
                         : new ArrayList<>();
 
         return PedidoAdminResponseDTO.builder()
-                .id(pedido.getId())
+                .id(pedido.getCodigo() != null ? pedido.getCodigo() : String.valueOf(pedido.getId()))
                 .clienteNombre(cliente != null ? cliente.getNombre() : "Cliente eliminado")
                 .clienteEmail(cliente != null ? cliente.getEmail() : "N/A")
                 .clienteTelefono(cliente != null ? cliente.getTelefono() : "N/A")
@@ -327,6 +327,7 @@ public class PedidoServiceImpl implements PedidoService {
                               : "")
                         : "Zona no especificada"
                 )
+                .notasEntrega(pedido.getNotasEntrega())
                 .build();
     }
 
@@ -484,7 +485,7 @@ public class PedidoServiceImpl implements PedidoService {
                         : new ArrayList<>();
 
         return PedidoHistorialDTO.builder()
-                .id(pedido.getId())
+                .id(pedido.getCodigo() != null ? pedido.getCodigo() : String.valueOf(pedido.getId()))
                 .total(pedido.getTotal())
                 .estado(pedido.getEstado().name())
                 .creadoEn(pedido.getCreadoEn())

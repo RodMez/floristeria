@@ -13,7 +13,7 @@ import lombok.Setter;
 @Builder
 public class PedidoAdminResponseDTO {
 
-    private Integer id;
+    private String id;
     private String clienteNombre;
     private String clienteEmail;
     private String clienteTelefono;
@@ -28,6 +28,7 @@ public class PedidoAdminResponseDTO {
     private LocalDateTime creadoEn;
     private BigDecimal costoEnvio;
     private String zonaDomicilioNombre;
+    private String notasEntrega;
 
     @Getter
     @Setter

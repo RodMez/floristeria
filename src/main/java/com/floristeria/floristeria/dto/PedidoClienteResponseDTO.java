@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PedidoClienteResponseDTO {
-    private Integer pedidoId;
+    private String pedidoId;
     private BigDecimal total;
     private String estado;
     private String referenciaWompi;

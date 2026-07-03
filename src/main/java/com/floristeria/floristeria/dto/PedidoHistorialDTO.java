@@ -13,7 +13,7 @@ import lombok.Setter;
 @Builder
 public class PedidoHistorialDTO {
 
-    private Integer id;
+    private String id;
     private BigDecimal total;
     private String estado;
     private LocalDateTime creadoEn;
