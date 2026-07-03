@@ -3,10 +3,12 @@ package com.floristeria.floristeria.service.impl;
 import com.floristeria.floristeria.dto.ProductoRequestDTO;
 import com.floristeria.floristeria.dto.ProductoResponseDTO;
 import com.floristeria.floristeria.entity.Categoria;
+import com.floristeria.floristeria.entity.EstadoPedido;
 import com.floristeria.floristeria.entity.Inventario;
 import com.floristeria.floristeria.entity.Producto;
 import com.floristeria.floristeria.entity.Sede;
 import com.floristeria.floristeria.repository.CategoriaRepository;
+import com.floristeria.floristeria.repository.DetallePedidoRepository;
 import com.floristeria.floristeria.repository.InventarioRepository;
 import com.floristeria.floristeria.repository.ProductoRepository;
 import com.floristeria.floristeria.repository.SedeRepository;
@@ -32,6 +34,7 @@ public class ProductoServiceImpl implements ProductoService {
 
     private final ProductoRepository productoRepository;
     private final CategoriaRepository categoriaRepository;
+    private final DetallePedidoRepository detallePedidoRepository;
     
     // inyecciones para la lógica de Inventario Multi-sede
     private final SedeRepository sedeRepository;
@@ -133,6 +136,15 @@ public class ProductoServiceImpl implements ProductoService {
     public void eliminarProducto(Integer id) {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado con id: " + id));
+
+        List<EstadoPedido> estadosFinales = List.of(EstadoPedido.CANCELADO, EstadoPedido.ENTREGADO);
+        boolean tienePedidosActivos = detallePedidoRepository
+                .existsByProducto_IdAndPedido_EstadoNotIn(id, estadosFinales);
+
+        if (tienePedidosActivos) {
+            throw new IllegalStateException(
+                    "No se puede eliminar el producto porque tiene pedidos activos asociados.");
+        }
                 
         producto.setDeletedAt(LocalDateTime.now());
         productoRepository.save(producto);
