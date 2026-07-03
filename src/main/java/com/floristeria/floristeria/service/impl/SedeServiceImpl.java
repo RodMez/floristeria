@@ -42,10 +42,16 @@ public class SedeServiceImpl implements SedeService {
 
     @Override
     public SedeResponseDTO crearSede(SedeRequestDTO requestDTO) {
+        // Validar que no exista otra sede con la misma ciudad
+        String ciudad = requestDTO.getCiudad().trim();
+        if (sedeRepository.existsByCiudadIgnoreCaseUnaccent(ciudad)) {
+            throw new IllegalArgumentException("Ya existe una sede en la ciudad: " + ciudad);
+        }
+
         // 1. Crear y guardar la nueva sede
         Sede sede = new Sede();
         sede.setNombre(requestDTO.getNombre().trim());
-        sede.setCiudad(requestDTO.getCiudad().trim());
+        sede.setCiudad(ciudad);
         sede.setWhatsapp(requestDTO.getTelefonoWhatsapp());
         sede.setInstagramUrl(requestDTO.getInstagramUrl());
         sede.setFacebookUrl(requestDTO.getFacebookUrl());
@@ -76,8 +82,14 @@ public class SedeServiceImpl implements SedeService {
         Sede sede = sedeRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Sede no encontrada con id: " + id));
 
+        // Validar que no exista otra sede con la misma ciudad (excluyendo la actual)
+        String ciudad = requestDTO.getCiudad().trim();
+        if (sedeRepository.existsByCiudadIgnoreCaseUnaccentAndIdNot(ciudad, id)) {
+            throw new IllegalArgumentException("Ya existe otra sede en la ciudad: " + ciudad);
+        }
+
         sede.setNombre(requestDTO.getNombre().trim());
-        sede.setCiudad(requestDTO.getCiudad().trim());
+        sede.setCiudad(ciudad);
         sede.setWhatsapp(requestDTO.getTelefonoWhatsapp());
         sede.setInstagramUrl(requestDTO.getInstagramUrl());
         sede.setFacebookUrl(requestDTO.getFacebookUrl());

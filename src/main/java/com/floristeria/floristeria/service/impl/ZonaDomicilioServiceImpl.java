@@ -51,6 +51,10 @@ public class ZonaDomicilioServiceImpl implements ZonaDomicilioService {
         String localidad = StringUtil.capitalize(request.getLocalidad());
         String barrio = StringUtil.capitalize(request.getBarrio());
 
+        if (zonaDomicilioRepository.existsByLocalidadBarrioSede(localidad, barrio, sede.getId())) {
+            throw new IllegalArgumentException("Ya existe una zona con la localidad '" + localidad + "' y barrio '" + barrio + "' en esta sede");
+        }
+
         ZonaDomicilio zona = ZonaDomicilio.builder()
                 .sede(sede)
                 .localidad(localidad)
@@ -72,6 +76,10 @@ public class ZonaDomicilioServiceImpl implements ZonaDomicilioService {
 
         String localidad = StringUtil.capitalize(request.getLocalidad());
         String barrio = StringUtil.capitalize(request.getBarrio());
+
+        if (zonaDomicilioRepository.existsByLocalidadBarrioSedeAndIdNot(localidad, barrio, sede.getId(), id)) {
+            throw new IllegalArgumentException("Ya existe otra zona con la localidad '" + localidad + "' y barrio '" + barrio + "' en esta sede");
+        }
 
         zona.setSede(sede);
         zona.setLocalidad(localidad);
@@ -99,6 +107,10 @@ public class ZonaDomicilioServiceImpl implements ZonaDomicilioService {
         String localidad = StringUtil.capitalize(request.getLocalidad());
         String barrio = StringUtil.capitalize(request.getBarrio());
 
+        if (zonaDomicilioRepository.existsByLocalidadBarrioSede(localidad, barrio, sede.getId())) {
+            throw new IllegalArgumentException("Ya existe una zona con la localidad '" + localidad + "' y barrio '" + barrio + "' en esta sede");
+        }
+
         ZonaDomicilio zona = ZonaDomicilio.builder()
                 .sede(sede)
                 .localidad(localidad)
@@ -121,6 +133,10 @@ public class ZonaDomicilioServiceImpl implements ZonaDomicilioService {
 
         String localidad = StringUtil.capitalize(request.getLocalidad());
         String barrio = StringUtil.capitalize(request.getBarrio());
+
+        if (zonaDomicilioRepository.existsByLocalidadBarrioSedeAndIdNot(localidad, barrio, sedeId, id)) {
+            throw new IllegalArgumentException("Ya existe otra zona con la localidad '" + localidad + "' y barrio '" + barrio + "' en esta sede");
+        }
 
         zona.setLocalidad(localidad);
         zona.setBarrio(barrio);
