@@ -9,6 +9,7 @@ import org.hibernate.annotations.SQLRestriction;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "Pedidos")
@@ -23,6 +24,9 @@ public class Pedido {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
+    @Column(unique = true)
+    private String codigo;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sede_id", nullable = false)
@@ -71,6 +75,9 @@ public class Pedido {
 
     @PrePersist
     protected void onCreate() {
+        if (this.codigo == null) {
+            this.codigo = "PED-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        }
         if (this.creadoEn == null) {
             this.creadoEn = LocalDateTime.now();
         }

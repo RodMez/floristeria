@@ -29,7 +29,7 @@ public class PedidoAdminController {
 
     @PutMapping("/{id}/estado")
     public ResponseEntity<PedidoAdminResponseDTO> actualizarEstado(
-            @PathVariable Integer id,
+            @PathVariable String id,
             @Valid @RequestBody PedidoEstadoUpdateRequestDTO request,
             @AuthenticationPrincipal UsuarioDetails usuario) {
         PedidoAdminResponseDTO updated = pedidoService.actualizarEstadoPedido(

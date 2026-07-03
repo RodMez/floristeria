@@ -18,7 +18,7 @@ public interface PedidoService {
 
     List<PedidoAdminResponseDTO> obtenerPedidosPorSede(Integer sedeId);
 
-    PedidoAdminResponseDTO actualizarEstadoPedido(Integer pedidoId, EstadoPedido nuevoEstado, Integer usuarioSedeId, String rol);
+    PedidoAdminResponseDTO actualizarEstadoPedido(String pedidoCodigo, EstadoPedido nuevoEstado, Integer usuarioSedeId, String rol);
 
     void procesarPagoExitoso(Integer pedidoId, String transaccionId, String metodoPago);
 
