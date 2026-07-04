@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,7 +55,8 @@ public class CategoriaServiceImpl implements CategoriaService {
     public void eliminarCategoria(Integer id) {
         Categoria categoria = categoriaRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Categoría no encontrada con id: " + id));
-        categoriaRepository.delete(categoria);
+        categoria.setDeletedAt(LocalDateTime.now());
+        categoriaRepository.save(categoria);
     }
 
     private CategoriaResponseDTO toResponseDTO(Categoria categoria) {

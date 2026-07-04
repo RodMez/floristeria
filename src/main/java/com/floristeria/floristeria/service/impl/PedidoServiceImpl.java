@@ -69,6 +69,7 @@ public class PedidoServiceImpl implements PedidoService {
 
         Pedido pedido = Pedido.builder()
                 .sede(sede)
+                .sedeNombre(sede.getNombre())
                 .cliente(cliente)
                 .direccion(direccion)
                 .notasEntrega(request.getNotasEntrega())
@@ -137,6 +138,7 @@ public class PedidoServiceImpl implements PedidoService {
 
         Pedido pedido = Pedido.builder()
                 .sede(sede)
+                .sedeNombre(sede.getNombre())
                 .cliente(cliente)
                 .direccion(direccion)
                 .costoEnvio(zonaDomicilio.getPrecio())
@@ -309,7 +311,7 @@ public class PedidoServiceImpl implements PedidoService {
                 .clienteNombre(cliente != null ? cliente.getNombre() : "Cliente eliminado")
                 .clienteEmail(cliente != null ? cliente.getEmail() : "N/A")
                 .clienteTelefono(cliente != null ? cliente.getTelefono() : "N/A")
-                .sedeNombre(sede != null ? sede.getNombre() : "Sede eliminada")
+                .sedeNombre(sede != null ? sede.getNombre() : (pedido.getSedeNombre() != null ? pedido.getSedeNombre() : "Sede eliminada"))
                 .metodoPago(pedido.getMetodoPago())
                 .referenciaPago(pedido.getReferenciaPago())
                 .direccionEntrega(direccionEntrega)
@@ -490,7 +492,7 @@ public class PedidoServiceImpl implements PedidoService {
                 .estado(pedido.getEstado().name())
                 .creadoEn(pedido.getCreadoEn())
                 .referenciaPago(pedido.getReferenciaPago())
-                .sedeNombre(sede != null ? sede.getNombre() : "Sede eliminada")
+                .sedeNombre(sede != null ? sede.getNombre() : (pedido.getSedeNombre() != null ? pedido.getSedeNombre() : "Sede eliminada"))
                 .metodoPago(pedido.getMetodoPago() != null ? pedido.getMetodoPago() : "No especificado")
                 .direccionEntrega(direccionEntrega)
                 .detalles(detalles)

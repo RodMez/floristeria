@@ -22,4 +22,6 @@ public interface PedidoRepository extends JpaRepository<Pedido, Integer> {
     List<Pedido> findByCliente_IdOrderByCreadoEnDesc(Integer clienteId);
 
     Optional<Pedido> findByCodigo(String codigo);
+
+    boolean existsBySede_IdAndEstadoNotIn(Integer sedeId, List<EstadoPedido> estados);
 }
