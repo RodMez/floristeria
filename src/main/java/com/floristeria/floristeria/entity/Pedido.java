@@ -30,7 +30,11 @@ public class Pedido {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sede_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
     private Sede sede;
+
+    @Column(name = "sede_nombre")
+    private String sedeNombre;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cliente_id", nullable = false)
@@ -83,6 +87,9 @@ public class Pedido {
         }
         if (this.estado == null) {
             this.estado = EstadoPedido.PENDIENTE_PAGO;
+        }
+        if (this.sedeNombre == null && this.sede != null) {
+            this.sedeNombre = this.sede.getNombre();
         }
     }
 }

@@ -21,5 +21,7 @@ public class SedeRequestDTO {
 
     private String facebookUrl;
 
+    private String tiktokUrl;
+
     private String email;
 }

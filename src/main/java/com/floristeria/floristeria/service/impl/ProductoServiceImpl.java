@@ -145,6 +145,14 @@ public class ProductoServiceImpl implements ProductoService {
             throw new IllegalStateException(
                     "No se puede eliminar el producto porque tiene pedidos activos asociados.");
         }
+
+        boolean estaDisponibleEnAlgunaSede = inventarioRepository
+                .existsByProducto_IdAndDisponibleTrueAndStockGreaterThan(id, 0);
+
+        if (estaDisponibleEnAlgunaSede) {
+            throw new IllegalStateException(
+                    "No se puede eliminar el producto porque está disponible en alguna sede. Desactívalo primero.");
+        }
                 
         producto.setDeletedAt(LocalDateTime.now());
         productoRepository.save(producto);

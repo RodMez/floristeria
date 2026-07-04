@@ -38,6 +38,9 @@ public class Sede {
     @Column(name = "facebook_url")
     private String facebookUrl;
 
+    @Column(name = "tiktok_url")
+    private String tiktokUrl;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 }

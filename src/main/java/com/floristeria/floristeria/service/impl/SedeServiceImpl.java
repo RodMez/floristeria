@@ -2,18 +2,21 @@ package com.floristeria.floristeria.service.impl;
 
 import com.floristeria.floristeria.dto.SedeRequestDTO;
 import com.floristeria.floristeria.dto.SedeResponseDTO;
+import com.floristeria.floristeria.entity.EstadoPedido;
 import com.floristeria.floristeria.entity.Inventario;
 import com.floristeria.floristeria.entity.Producto;
 import com.floristeria.floristeria.entity.Sede;
-import com.floristeria.floristeria.entity.UsuarioAdmin;
 import com.floristeria.floristeria.repository.InventarioRepository;
+import com.floristeria.floristeria.repository.PedidoRepository;
 import com.floristeria.floristeria.repository.ProductoRepository;
 import com.floristeria.floristeria.repository.SedeRepository;
 import com.floristeria.floristeria.repository.UsuarioAdminRepository;
+import com.floristeria.floristeria.repository.ZonaDomicilioRepository;
 import com.floristeria.floristeria.service.SedeService;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +27,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional
 public class SedeServiceImpl implements SedeService {
 
@@ -31,6 +35,8 @@ public class SedeServiceImpl implements SedeService {
     private final ProductoRepository productoRepository;
     private final InventarioRepository inventarioRepository;
     private final UsuarioAdminRepository usuarioAdminRepository;
+    private final PedidoRepository pedidoRepository;
+    private final ZonaDomicilioRepository zonaDomicilioRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -55,6 +61,7 @@ public class SedeServiceImpl implements SedeService {
         sede.setWhatsapp(requestDTO.getTelefonoWhatsapp());
         sede.setInstagramUrl(requestDTO.getInstagramUrl());
         sede.setFacebookUrl(requestDTO.getFacebookUrl());
+        sede.setTiktokUrl(requestDTO.getTiktokUrl());
         sede.setEmail(requestDTO.getEmail());
 
         Sede sedeGuardada = sedeRepository.save(sede);
@@ -93,6 +100,7 @@ public class SedeServiceImpl implements SedeService {
         sede.setWhatsapp(requestDTO.getTelefonoWhatsapp());
         sede.setInstagramUrl(requestDTO.getInstagramUrl());
         sede.setFacebookUrl(requestDTO.getFacebookUrl());
+        sede.setTiktokUrl(requestDTO.getTiktokUrl());
         sede.setEmail(requestDTO.getEmail());
 
         Sede sedeActualizada = sedeRepository.save(sede);
@@ -104,19 +112,37 @@ public class SedeServiceImpl implements SedeService {
         Sede sede = sedeRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Sede no encontrada con id: " + id));
 
-        List<Inventario> inventarios = inventarioRepository.findBySede_Id(id);
-        for (Inventario inv : inventarios) {
-            inv.setDeletedAt(LocalDateTime.now());
-            inventarioRepository.save(inv);
+        log.info("Intentando eliminar sede id={}, ciudad={}", id, sede.getCiudad());
+
+        List<Inventario> bloqueantes = inventarioRepository.findBySede_IdAndDisponibleTrueAndStockGreaterThan(id, 0);
+        log.info("Productos disponibles (disp=true, stock>0): {}", bloqueantes.size());
+        for (Inventario inv : bloqueantes) {
+            log.info("  - Producto id={}, nombre={}, stock={}, disponible={}",
+                    inv.getProducto() != null ? inv.getProducto().getId() : "N/A",
+                    inv.getProducto() != null ? inv.getProducto().getNombre() : "Producto eliminado",
+                    inv.getStock(), inv.getDisponible());
         }
 
-        List<UsuarioAdmin> usuarios = usuarioAdminRepository.findBySede_Id(id);
-        for (UsuarioAdmin user : usuarios) {
-            user.setDeletedAt(LocalDateTime.now());
-            usuarioAdminRepository.save(user);
+        if (!bloqueantes.isEmpty()) {
+            throw new IllegalStateException(
+                    "No se puede eliminar la sede porque tiene productos disponibles. Desactiva o cambia el stock de los productos primero.");
         }
 
-        sede.setDeletedAt(LocalDateTime.now());
+        List<EstadoPedido> estadosFinales = List.of(EstadoPedido.ENTREGADO, EstadoPedido.CANCELADO);
+        boolean hayPedidosActivos = pedidoRepository.existsBySede_IdAndEstadoNotIn(id, estadosFinales);
+        log.info("Pedidos activos (no ENTREGADO/CANCELADO): {}", hayPedidosActivos);
+
+        if (hayPedidosActivos) {
+            throw new IllegalStateException(
+                    "No se puede eliminar la sede porque tiene pedidos activos. Espera a que se completen o cancelen todos los pedidos.");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        inventarioRepository.softDeleteBySedeId(id, now);
+        usuarioAdminRepository.softDeleteBySedeId(id, now);
+        zonaDomicilioRepository.softDeleteBySedeId(id, now);
+
+        sede.setDeletedAt(now);
         sedeRepository.save(sede);
     }
 
@@ -128,6 +154,7 @@ public class SedeServiceImpl implements SedeService {
                 .telefonoWhatsapp(sede.getWhatsapp())
                 .instagramUrl(sede.getInstagramUrl())
                 .facebookUrl(sede.getFacebookUrl())
+                .tiktokUrl(sede.getTiktokUrl())
                 .email(sede.getEmail())
                 .build();
     }
