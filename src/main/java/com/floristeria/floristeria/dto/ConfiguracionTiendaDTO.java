@@ -17,6 +17,18 @@ public class ConfiguracionTiendaDTO {
         private String correoMaestro;
 
         private Boolean enviarCopiaMaestro;
+
+        private String whatsappGeneral;
+
+        private String instagramUrl;
+
+        private String facebookUrl;
+
+        private String tiktokUrl;
+
+        private String imagenHeroUrl;
+
+        private String imagenBannerUrl;
     }
 
     @Data
@@ -27,5 +39,23 @@ public class ConfiguracionTiendaDTO {
         private Integer id;
         private String correoMaestro;
         private Boolean enviarCopiaMaestro;
+        private String whatsappGeneral;
+        private String instagramUrl;
+        private String facebookUrl;
+        private String tiktokUrl;
+        private String imagenHeroUrl;
+        private String imagenBannerUrl;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class PublicResponseDTO {
+        private String correoMaestro;
+        private String whatsappGeneral;
+        private String instagramUrl;
+        private String facebookUrl;
+        private String tiktokUrl;
     }
 }
