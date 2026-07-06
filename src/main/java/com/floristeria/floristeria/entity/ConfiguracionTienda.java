@@ -22,4 +22,22 @@ public class ConfiguracionTienda {
     @Column(name = "enviar_copia_maestro", nullable = false)
     @Builder.Default
     private Boolean enviarCopiaMaestro = false;
+
+    @Column(name = "whatsapp_general")
+    private String whatsappGeneral;
+
+    @Column(name = "instagram_url")
+    private String instagramUrl;
+
+    @Column(name = "facebook_url")
+    private String facebookUrl;
+
+    @Column(name = "tiktok_url")
+    private String tiktokUrl;
+
+    @Column(name = "imagen_hero_url")
+    private String imagenHeroUrl;
+
+    @Column(name = "imagen_banner_url")
+    private String imagenBannerUrl;
 }

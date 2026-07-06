@@ -26,7 +26,13 @@ public class ConfiguracionAdminController {
             @Valid @RequestBody ConfiguracionTiendaDTO.RequestDTO request) {
         ConfiguracionTienda config = configuracionService.actualizarConfiguracion(
                 request.getCorreoMaestro(),
-                request.getEnviarCopiaMaestro() != null ? request.getEnviarCopiaMaestro() : false
+                request.getEnviarCopiaMaestro(),
+                request.getWhatsappGeneral(),
+                request.getInstagramUrl(),
+                request.getFacebookUrl(),
+                request.getTiktokUrl(),
+                request.getImagenHeroUrl(),
+                request.getImagenBannerUrl()
         );
         return ResponseEntity.ok(mapToResponse(config));
     }
@@ -36,6 +42,12 @@ public class ConfiguracionAdminController {
                 .id(config.getId())
                 .correoMaestro(config.getCorreoMaestro())
                 .enviarCopiaMaestro(config.getEnviarCopiaMaestro())
+                .whatsappGeneral(config.getWhatsappGeneral())
+                .instagramUrl(config.getInstagramUrl())
+                .facebookUrl(config.getFacebookUrl())
+                .tiktokUrl(config.getTiktokUrl())
+                .imagenHeroUrl(config.getImagenHeroUrl())
+                .imagenBannerUrl(config.getImagenBannerUrl())
                 .build();
     }
 }
