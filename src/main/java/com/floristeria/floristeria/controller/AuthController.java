@@ -25,11 +25,13 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDTO> login(@RequestBody LoginRequestDTO request) {
+        String email = request.getEmail().toLowerCase().trim();
+
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(email, request.getPassword())
         );
 
-        UsuarioAdmin usuario = usuarioAdminRepository.findByEmail(request.getEmail())
+        UsuarioAdmin usuario = usuarioAdminRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         String token = jwtService.generateToken(usuario);

@@ -25,6 +25,11 @@ public interface UsuarioAdminRepository extends JpaRepository<UsuarioAdmin, Inte
     Optional<UsuarioAdmin> findByEmail(String email);
 
     /**
+     * Verifica si existe un usuario con el email dado
+     */
+    boolean existsByEmail(String email);
+
+    /**
      * Lista todos los usuarios administradores que pertenecen a un sede en específico.
      */
     // CORREGIDO: Sede_Id
