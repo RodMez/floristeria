@@ -37,6 +37,12 @@ public class UsuarioAdminServiceImpl implements UsuarioAdminService {
 
     @Override
     public UsuarioAdminResponseDTO crearUsuario(UsuarioAdminRequestDTO request) {
+        String email = request.getEmail().toLowerCase().trim();
+
+        if (usuarioAdminRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException("El email ya está registrado");
+        }
+
         Sede sede = null;
         if (request.getSedeId() != null) {
             sede = sedeRepository.findById(request.getSedeId())
@@ -45,7 +51,7 @@ public class UsuarioAdminServiceImpl implements UsuarioAdminService {
         }
 
         UsuarioAdmin usuario = new UsuarioAdmin();
-        usuario.setEmail(request.getEmail());
+        usuario.setEmail(email);
         usuario.setNombre(request.getNombre());
         usuario.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         usuario.setRol(request.getRol());
@@ -67,7 +73,7 @@ public class UsuarioAdminServiceImpl implements UsuarioAdminService {
                             "Sede no encontrada con id: " + request.getSedeId()));
         }
 
-        usuario.setEmail(request.getEmail());
+        usuario.setEmail(request.getEmail().toLowerCase().trim());
         usuario.setNombre(request.getNombre());
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             usuario.setPasswordHash(passwordEncoder.encode(request.getPassword()));

@@ -27,7 +27,7 @@ public class UsuarioAdmin {
     @JoinColumn(name = "sede_id", nullable = true)
     private Sede sede;
 
-    @Column(name = "email", nullable = false)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
     @Column(name = "password_hash", nullable = false)
@@ -38,4 +38,12 @@ public class UsuarioAdmin {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    @PrePersist
+    @PreUpdate
+    protected void onCreate() {
+        if (this.email != null) {
+            this.email = this.email.toLowerCase().trim();
+        }
+    }
 }
