@@ -39,9 +39,13 @@ public class Cliente {
     private LocalDateTime deletedAt;
 
     @PrePersist
+    @PreUpdate
     protected void onCreate() {
         if (this.creadoEn == null) {
             this.creadoEn = LocalDateTime.now();
+        }
+        if (this.email != null) {
+            this.email = this.email.toLowerCase().trim();
         }
     }
 }

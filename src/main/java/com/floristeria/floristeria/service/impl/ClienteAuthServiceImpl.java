@@ -27,15 +27,17 @@ public class ClienteAuthServiceImpl implements ClienteAuthService {
     @Override
     @Transactional
     public ClienteAuthResponseDTO registrar(ClienteRegistroDTO request) {
+        String email = request.getEmail().toLowerCase().trim();
+
         // Validar que el email no exista
-        if (clienteRepository.existsByEmail(request.getEmail())) {
+        if (clienteRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("El email ya está registrado");
         }
 
         // Crear y guardar el cliente
         Cliente cliente = Cliente.builder()
                 .nombre(request.getNombre())
-                .email(request.getEmail())
+                .email(email)
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .telefono(request.getTelefono())
                 .build();
@@ -57,8 +59,8 @@ public class ClienteAuthServiceImpl implements ClienteAuthService {
     @Override
     @Transactional(readOnly = true)
     public ClienteAuthResponseDTO login(ClienteLoginDTO request) {
-        // Buscar por email
-        Cliente cliente = clienteRepository.findByEmail(request.getEmail())
+        // Buscar por email (normalizado a minúsculas)
+        Cliente cliente = clienteRepository.findByEmail(request.getEmail().toLowerCase().trim())
                 .orElseThrow(() -> new IllegalArgumentException("Credenciales inválidas"));
 
         // Verificar contraseña
