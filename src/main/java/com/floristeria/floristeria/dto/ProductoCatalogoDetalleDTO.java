@@ -1,6 +1,7 @@
 package com.floristeria.floristeria.dto;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,4 +26,5 @@ public class ProductoCatalogoDetalleDTO {
     private BigDecimal precioFinal;
     private Integer stock;
     private Boolean disponible;
+    private List<String> categoriasNombres;
 }

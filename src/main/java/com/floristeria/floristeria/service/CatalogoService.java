@@ -2,6 +2,7 @@ package com.floristeria.floristeria.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -70,6 +71,10 @@ public class CatalogoService {
         Sede s = inv.getSede();
         BigDecimal precioFinal = calcularPrecioConDescuento(inv.getPrecio(), inv.getDescuentoPorcentaje());
 
+        List<String> categoriasNombres = p.getCategorias() != null
+                ? p.getCategorias().stream().map(Categoria::getNombre).toList()
+                : Collections.emptyList();
+
         return ProductoCatalogoDetalleDTO.builder()
                 .inventarioId(inv.getId())
                 .productoId(p.getId())
@@ -84,6 +89,7 @@ public class CatalogoService {
                 .precioFinal(precioFinal)
                 .stock(inv.getStock())
                 .disponible(inv.getDisponible())
+                .categoriasNombres(categoriasNombres)
                 .build();
     }
 
