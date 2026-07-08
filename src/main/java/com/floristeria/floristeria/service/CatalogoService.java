@@ -17,6 +17,7 @@ import com.floristeria.floristeria.entity.Inventario;
 import com.floristeria.floristeria.entity.Producto;
 import com.floristeria.floristeria.entity.Sede;
 import com.floristeria.floristeria.repository.InventarioRepository;
+import com.floristeria.floristeria.repository.ReseñaRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class CatalogoService {
 
     private final InventarioRepository inventarioRepository;
+    private final ReseñaRepository reseñaRepository;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -40,9 +42,10 @@ public class CatalogoService {
                             .collect(Collectors.toList());
 
                     BigDecimal precioConDescuento = calcularPrecioConDescuento(inv.getPrecio(), inv.getDescuentoPorcentaje());
+                    Integer prodId = producto.getId();
 
                     return ProductoCatalogoDTO.builder()
-                            .productoId(producto.getId())
+                            .productoId(prodId)
                             .nombre(producto.getNombre())
                             .descripcion(producto.getDescripcion())
                             .imagenUrl(producto.getImagenUrl())
@@ -53,6 +56,8 @@ public class CatalogoService {
                             .precioConDescuento(precioConDescuento)
                             .stock(inv.getStock())
                             .disponible(true)
+                            .ratingAverage(reseñaRepository.findAverageRatingByProductoId(prodId))
+                            .ratingCount(reseñaRepository.findCountByProductoId(prodId))
                             .build();
                 })
                 .collect(Collectors.toList());
@@ -75,9 +80,11 @@ public class CatalogoService {
                 ? p.getCategorias().stream().map(Categoria::getNombre).toList()
                 : Collections.emptyList();
 
+        Integer prodId = p.getId();
+
         return ProductoCatalogoDetalleDTO.builder()
                 .inventarioId(inv.getId())
-                .productoId(p.getId())
+                .productoId(prodId)
                 .nombre(p.getNombre())
                 .descripcion(p.getDescripcion())
                 .imagenUrl(p.getImagenUrl())
@@ -90,6 +97,8 @@ public class CatalogoService {
                 .stock(inv.getStock())
                 .disponible(inv.getDisponible())
                 .categoriasNombres(categoriasNombres)
+                .ratingAverage(reseñaRepository.findAverageRatingByProductoId(prodId))
+                .ratingCount(reseñaRepository.findCountByProductoId(prodId))
                 .build();
     }
 

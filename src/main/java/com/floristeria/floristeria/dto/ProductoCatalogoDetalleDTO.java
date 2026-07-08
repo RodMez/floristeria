@@ -27,4 +27,6 @@ public class ProductoCatalogoDetalleDTO {
     private Integer stock;
     private Boolean disponible;
     private List<String> categoriasNombres;
+    private Double ratingAverage;
+    private Integer ratingCount;
 }
