@@ -55,4 +55,13 @@ public class ConfiguracionTienda {
 
     @Column(name = "icon_url")
     private String iconUrl;
+
+    @Column(name = "historia", columnDefinition = "TEXT")
+    private String historia;
+
+    @Column(name = "mision", columnDefinition = "TEXT")
+    private String mision;
+
+    @Column(name = "vision", columnDefinition = "TEXT")
+    private String vision;
 }

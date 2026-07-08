@@ -30,6 +30,9 @@ public class ConfiguracionPublicController {
                 .descripcion(config.getDescripcion())
                 .logoUrl(config.getLogoUrl())
                 .iconUrl(config.getIconUrl())
+                .historia(config.getHistoria())
+                .mision(config.getMision())
+                .vision(config.getVision())
                 .build());
     }
 }
