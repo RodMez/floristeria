@@ -48,15 +48,17 @@ public class SedeServiceImpl implements SedeService {
 
     @Override
     public SedeResponseDTO crearSede(SedeRequestDTO requestDTO) {
-        // Validar que no exista otra sede con la misma ciudad
+        // Validar que no exista otra sede con la misma combinación de ciudad y nombre
         String ciudad = requestDTO.getCiudad().trim();
-        if (sedeRepository.existsByCiudadIgnoreCaseUnaccent(ciudad)) {
-            throw new IllegalArgumentException("Ya existe una sede en la ciudad: " + ciudad);
+        String nombre = requestDTO.getNombre().trim();
+        if (sedeRepository.existsByCiudadAndNombreIgnoreCaseUnaccent(ciudad, nombre)) {
+            throw new IllegalArgumentException(
+                    "Ya existe una sede con el nombre '" + nombre + "' en la ciudad: " + ciudad);
         }
 
         // 1. Crear y guardar la nueva sede
         Sede sede = new Sede();
-        sede.setNombre(requestDTO.getNombre().trim());
+        sede.setNombre(nombre);
         sede.setCiudad(ciudad);
         sede.setWhatsapp(requestDTO.getTelefonoWhatsapp());
         sede.setInstagramUrl(requestDTO.getInstagramUrl());
@@ -89,13 +91,15 @@ public class SedeServiceImpl implements SedeService {
         Sede sede = sedeRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Sede no encontrada con id: " + id));
 
-        // Validar que no exista otra sede con la misma ciudad (excluyendo la actual)
+        // Validar que no exista otra sede con la misma combinación de ciudad y nombre (excluyendo la actual)
         String ciudad = requestDTO.getCiudad().trim();
-        if (sedeRepository.existsByCiudadIgnoreCaseUnaccentAndIdNot(ciudad, id)) {
-            throw new IllegalArgumentException("Ya existe otra sede en la ciudad: " + ciudad);
+        String nombre = requestDTO.getNombre().trim();
+        if (sedeRepository.existsByCiudadAndNombreIgnoreCaseUnaccentAndIdNot(ciudad, nombre, id)) {
+            throw new IllegalArgumentException(
+                    "Ya existe otra sede con el nombre '" + nombre + "' en la ciudad: " + ciudad);
         }
 
-        sede.setNombre(requestDTO.getNombre().trim());
+        sede.setNombre(nombre);
         sede.setCiudad(ciudad);
         sede.setWhatsapp(requestDTO.getTelefonoWhatsapp());
         sede.setInstagramUrl(requestDTO.getInstagramUrl());
