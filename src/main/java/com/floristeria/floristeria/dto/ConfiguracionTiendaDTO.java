@@ -1,6 +1,7 @@
 package com.floristeria.floristeria.dto;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,32 +19,44 @@ public class ConfiguracionTiendaDTO {
 
         private Boolean enviarCopiaMaestro;
 
+        @Size(max = 20, message = "El WhatsApp no puede superar los 20 caracteres")
         private String whatsappGeneral;
 
+        @Size(max = 500, message = "La URL de Instagram no puede superar los 500 caracteres")
         private String instagramUrl;
 
+        @Size(max = 500, message = "La URL de Facebook no puede superar los 500 caracteres")
         private String facebookUrl;
 
+        @Size(max = 500, message = "La URL de TikTok no puede superar los 500 caracteres")
         private String tiktokUrl;
 
         private String imagenHeroUrl;
 
         private String imagenBannerUrl;
 
+        @Size(max = 100, message = "El nombre del sitio no puede superar los 100 caracteres")
         private String nombreSitio;
 
+        @Size(max = 150, message = "El tagline no puede superar los 150 caracteres")
         private String tagline;
 
+        @Size(max = 500, message = "La descripción no puede superar los 500 caracteres")
         private String descripcion;
 
+        @Size(max = 500, message = "La URL del logo no puede superar los 500 caracteres")
         private String logoUrl;
 
+        @Size(max = 500, message = "La URL del ícono no puede superar los 500 caracteres")
         private String iconUrl;
 
+        @Size(max = 10000, message = "La historia no puede superar los 10000 caracteres")
         private String historia;
 
+        @Size(max = 10000, message = "La misión no puede superar los 10000 caracteres")
         private String mision;
 
+        @Size(max = 10000, message = "La visión no puede superar los 10000 caracteres")
         private String vision;
     }
 
