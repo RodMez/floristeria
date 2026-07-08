@@ -44,7 +44,7 @@ public class SecurityConfig {
                         // 1. Rutas Públicas (no requieren autenticación)
                         .requestMatchers("/api/auth/**", "/api/v1/clientes/auth/**").permitAll()
                         // Endpoints públicos de catálogo
-                        .requestMatchers("/api/v1/catalogo/**", "/api/v1/sedes/**", "/api/v1/categorias/**", "/api/v1/zonas-domicilio/**", "/api/v1/configuracion", "/api/v1/banners/**").permitAll()
+                        .requestMatchers("/api/v1/catalogo/**", "/api/v1/sedes/**", "/api/v1/categorias/**", "/api/v1/zonas-domicilio/**", "/api/v1/configuracion", "/api/v1/banners/**", "/api/v1/resenas/producto/**").permitAll()
                         .requestMatchers("/api/v1/webhooks/**").permitAll()
                         // 2. Rutas de Clientes (requieren rol CLIENTE autenticado)
                         .requestMatchers("/api/v1/clientes/**").hasAuthority("CLIENTE")

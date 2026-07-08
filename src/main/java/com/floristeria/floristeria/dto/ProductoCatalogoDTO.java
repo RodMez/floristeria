@@ -24,4 +24,6 @@ public class ProductoCatalogoDTO {
     private BigDecimal precioConDescuento;
     private Integer stock;
     private Boolean disponible;
+    private Double ratingAverage;
+    private Integer ratingCount;
 }
