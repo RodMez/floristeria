@@ -39,6 +39,12 @@ public class ConfiguracionTiendaDTO {
         private String logoUrl;
 
         private String iconUrl;
+
+        private String historia;
+
+        private String mision;
+
+        private String vision;
     }
 
     @Data
@@ -60,6 +66,9 @@ public class ConfiguracionTiendaDTO {
         private String descripcion;
         private String logoUrl;
         private String iconUrl;
+        private String historia;
+        private String mision;
+        private String vision;
     }
 
     @Data
@@ -77,5 +86,8 @@ public class ConfiguracionTiendaDTO {
         private String descripcion;
         private String logoUrl;
         private String iconUrl;
+        private String historia;
+        private String mision;
+        private String vision;
     }
 }
