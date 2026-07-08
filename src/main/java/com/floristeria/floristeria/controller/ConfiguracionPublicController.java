@@ -25,6 +25,11 @@ public class ConfiguracionPublicController {
                 .instagramUrl(config.getInstagramUrl())
                 .facebookUrl(config.getFacebookUrl())
                 .tiktokUrl(config.getTiktokUrl())
+                .nombreSitio(config.getNombreSitio())
+                .tagline(config.getTagline())
+                .descripcion(config.getDescripcion())
+                .logoUrl(config.getLogoUrl())
+                .iconUrl(config.getIconUrl())
                 .build());
     }
 }

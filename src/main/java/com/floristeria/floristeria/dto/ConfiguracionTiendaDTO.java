@@ -29,6 +29,16 @@ public class ConfiguracionTiendaDTO {
         private String imagenHeroUrl;
 
         private String imagenBannerUrl;
+
+        private String nombreSitio;
+
+        private String tagline;
+
+        private String descripcion;
+
+        private String logoUrl;
+
+        private String iconUrl;
     }
 
     @Data
@@ -45,6 +55,11 @@ public class ConfiguracionTiendaDTO {
         private String tiktokUrl;
         private String imagenHeroUrl;
         private String imagenBannerUrl;
+        private String nombreSitio;
+        private String tagline;
+        private String descripcion;
+        private String logoUrl;
+        private String iconUrl;
     }
 
     @Data
@@ -57,5 +72,10 @@ public class ConfiguracionTiendaDTO {
         private String instagramUrl;
         private String facebookUrl;
         private String tiktokUrl;
+        private String nombreSitio;
+        private String tagline;
+        private String descripcion;
+        private String logoUrl;
+        private String iconUrl;
     }
 }

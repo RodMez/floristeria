@@ -32,7 +32,12 @@ public class ConfiguracionAdminController {
                 request.getFacebookUrl(),
                 request.getTiktokUrl(),
                 request.getImagenHeroUrl(),
-                request.getImagenBannerUrl()
+                request.getImagenBannerUrl(),
+                request.getNombreSitio(),
+                request.getTagline(),
+                request.getDescripcion(),
+                request.getLogoUrl(),
+                request.getIconUrl()
         );
         return ResponseEntity.ok(mapToResponse(config));
     }
@@ -48,6 +53,11 @@ public class ConfiguracionAdminController {
                 .tiktokUrl(config.getTiktokUrl())
                 .imagenHeroUrl(config.getImagenHeroUrl())
                 .imagenBannerUrl(config.getImagenBannerUrl())
+                .nombreSitio(config.getNombreSitio())
+                .tagline(config.getTagline())
+                .descripcion(config.getDescripcion())
+                .logoUrl(config.getLogoUrl())
+                .iconUrl(config.getIconUrl())
                 .build();
     }
 }

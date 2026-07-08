@@ -40,4 +40,19 @@ public class ConfiguracionTienda {
 
     @Column(name = "imagen_banner_url")
     private String imagenBannerUrl;
+
+    @Column(name = "nombre_sitio")
+    private String nombreSitio;
+
+    @Column(name = "tagline")
+    private String tagline;
+
+    @Column(name = "descripcion", length = 500)
+    private String descripcion;
+
+    @Column(name = "logo_url")
+    private String logoUrl;
+
+    @Column(name = "icon_url")
+    private String iconUrl;
 }

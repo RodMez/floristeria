@@ -30,7 +30,8 @@ public class ConfiguracionTiendaServiceImpl implements ConfiguracionTiendaServic
     @Override
     @Transactional
     public ConfiguracionTienda actualizarConfiguracion(String correo, Boolean enviar, String whatsapp,
-            String instagram, String facebook, String tiktok, String heroUrl, String bannerUrl) {
+            String instagram, String facebook, String tiktok, String heroUrl, String bannerUrl,
+            String nombreSitio, String tagline, String descripcion, String logoUrl, String iconUrl) {
         ConfiguracionTienda config = obtenerConfiguracion();
         config.setCorreoMaestro(correo);
         config.setEnviarCopiaMaestro(enviar != null ? enviar : false);
@@ -40,6 +41,11 @@ public class ConfiguracionTiendaServiceImpl implements ConfiguracionTiendaServic
         config.setTiktokUrl(tiktok);
         config.setImagenHeroUrl(heroUrl);
         config.setImagenBannerUrl(bannerUrl);
+        config.setNombreSitio(nombreSitio);
+        config.setTagline(tagline);
+        config.setDescripcion(descripcion);
+        config.setLogoUrl(logoUrl);
+        config.setIconUrl(iconUrl);
         return configuracionRepository.save(config);
     }
 }
