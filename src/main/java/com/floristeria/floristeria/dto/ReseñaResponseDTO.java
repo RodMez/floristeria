@@ -15,6 +15,7 @@ public class ReseñaResponseDTO {
 
     private Integer id;
     private Integer productoId;
+    private String productoNombre;
     private Integer clienteId;
     private String clienteNombre;
     private Integer calificacion;

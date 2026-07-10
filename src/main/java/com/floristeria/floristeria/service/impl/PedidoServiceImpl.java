@@ -475,6 +475,8 @@ public class PedidoServiceImpl implements PedidoService {
                 pedido.getDetalles() != null
                         ? pedido.getDetalles().stream()
                                 .map(d -> PedidoHistorialDTO.DetalleHistorialDTO.builder()
+                                        .productoId(d.getProducto() != null
+                                                ? d.getProducto().getId() : null)
                                         .productoNombre(d.getProducto() != null
                                                 ? d.getProducto().getNombre() : "Producto eliminado")
                                         .productoSku(d.getProducto() != null

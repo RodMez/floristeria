@@ -148,6 +148,7 @@ public class ReseñaServiceImpl implements ReseñaService {
         return ReseñaResponseDTO.builder()
                 .id(reseña.getId())
                 .productoId(reseña.getProducto().getId())
+                .productoNombre(reseña.getProducto().getNombre())
                 .clienteId(reseña.getCliente().getId())
                 .clienteNombre(reseña.getCliente().getNombre())
                 .calificacion(reseña.getCalificacion())
