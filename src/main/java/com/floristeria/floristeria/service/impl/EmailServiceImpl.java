@@ -37,6 +37,9 @@ public class EmailServiceImpl implements EmailService {
     @Value("${brevo.sender-name}")
     private String brevoSenderName;
 
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
+
     private static final String BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
     @Async
@@ -113,20 +116,52 @@ public class EmailServiceImpl implements EmailService {
     }
 
     private String construirHtmlReciboCliente(Pedido pedido) {
+        ConfiguracionTienda config = configuracionService.obtenerConfiguracion();
+        String logoUrl = config.getLogoUrl() != null ? config.getLogoUrl() : "";
+        String nombreSitio = config.getNombreSitio() != null ? config.getNombreSitio() : "TAO Boutique Floral";
+        Integer sedeId = pedido.getSede() != null ? pedido.getSede().getId() : null;
+
         StringBuilder detallesHtml = new StringBuilder();
+        StringBuilder resenasHtml = new StringBuilder();
         if (pedido.getDetalles() != null) {
             for (DetallePedido detalle : pedido.getDetalles()) {
                 String nombreProducto = detalle.getProducto() != null
                         ? detalle.getProducto().getNombre() : "Producto eliminado";
                 String nota = detalle.getNotaPersonalizacion() != null
                         ? detalle.getNotaPersonalizacion() : "N/A";
+
+                String productUrl = (detalle.getProducto() != null && sedeId != null)
+                        ? frontendUrl + "/tienda/sede/" + sedeId + "/producto/" + detalle.getProducto().getId()
+                        : "#";
+                String linkedNombre = String.format(
+                        "<a href='%s' style='color:#E5BE6F;text-decoration:none;font-weight:bold;'>%s</a>",
+                        productUrl, nombreProducto);
+
                 detallesHtml.append(String.format(
-                        "<tr><td style='padding:8px;border:1px solid #ddd;'>%s</td>" +
-                        "<td style='padding:8px;border:1px solid #ddd;text-align:center;'>%d</td>" +
-                        "<td style='padding:8px;border:1px solid #ddd;text-align:right;'>$%,.0f</td>" +
-                        "<td style='padding:8px;border:1px solid #ddd;'>%s</td></tr>",
-                        nombreProducto, detalle.getCantidad(), detalle.getPrecioUnitario(), nota));
+                        "<tr><td style='padding:8px;border:1px solid #eee;'>%s</td>" +
+                        "<td style='padding:8px;border:1px solid #eee;text-align:center;'>%d</td>" +
+                        "<td style='padding:8px;border:1px solid #eee;text-align:right;'>$%,.0f</td>" +
+                        "<td style='padding:8px;border:1px solid #eee;'>%s</td></tr>",
+                        linkedNombre, detalle.getCantidad(), detalle.getPrecioUnitario(), nota));
+
+                if (detalle.getProducto() != null && sedeId != null) {
+                    String reviewUrl = productUrl;
+                    resenasHtml.append(String.format(
+                            "<a href='%s' style='display:inline-block;background-color:#E5BE6F;color:#3d3d3d;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:14px;margin:4px;'>Reseñar: %s</a> ",
+                            reviewUrl, nombreProducto));
+                }
             }
+        }
+
+        String reviewSectionHtml = "";
+        if (resenasHtml.length() > 0) {
+            reviewSectionHtml = """
+                    <div style="background-color:#FFF8E7;border:1px solid #E5BE6F30;border-radius:12px;padding:20px;margin:24px 0;text-align:center;">
+                        <h3 style="color:#3d3d3d;margin:0 0 6px;">¿Qué te pareció tu compra?</h3>
+                        <p style="color:#888;margin:0 0 14px;font-size:14px;">Tu opinión nos ayuda a mejorar</p>
+                        %s
+                    </div>
+                    """.formatted(resenasHtml);
         }
 
         String fechaFormateada = pedido.getCreadoEn() != null
@@ -138,8 +173,8 @@ public class EmailServiceImpl implements EmailService {
             Direccion d = pedido.getDireccion();
             String detalles = d.getDetalles() != null ? d.getDetalles() : "Sin detalles adicionales";
             direccionHtml = """
-                    <h3>Dirección de entrega:</h3>
-                    <ul style="list-style:none;padding:0;">
+                    <h3 style="color:#3d3d3d;margin:20px 0 8px;">Dirección de entrega:</h3>
+                    <ul style="list-style:none;padding:0;color:#555;">
                         <li><strong>Alias:</strong> %s</li>
                         <li><strong>Dirección:</strong> %s</li>
                         <li><strong>Ciudad:</strong> %s</li>
@@ -163,44 +198,56 @@ public class EmailServiceImpl implements EmailService {
         }
         BigDecimal costoEnvio = pedido.getCostoEnvio() != null ? pedido.getCostoEnvio() : BigDecimal.ZERO;
 
+        String logoHtml = !logoUrl.isEmpty()
+                ? "<img src='" + logoUrl + "' alt='Logo' width='80' style='border-radius:50%;margin-bottom:8px;' />"
+                : "";
+
         return """
                 <html>
-                <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-                    <div style="background-color:#4CAF50;color:white;padding:20px;text-align:center;">
-                        <h1>Floristeria - Confirmación de Pedido</h1>
+                <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background-color:#fafafa;">
+                    <div style="background-color:#fafaf9;padding:28px 20px;text-align:center;border-bottom:3px solid #E5BE6F;">
+                        %s
+                        <h1 style="color:#3d3d3d;font-size:20px;margin:0;">%s</h1>
+                        <p style="color:#999;font-size:13px;margin:4px 0 0;">Confirmación de Pedido</p>
                     </div>
-                    <div style="padding:20px;">
-                        <p>Hola <strong>%s</strong>,</p>
-                        <p>Tu pedido ha sido confirmado y el pago procesado exitosamente.</p>
-                        <p><strong>Pedido:</strong> %s</p>
-                        <p><strong>Referencia de pago:</strong> %s</p>
-                        <p><strong>Fecha:</strong> %s</p>
-                        <p><strong>Sede de despacho:</strong> %s</p>
-                        <p><strong>Método de pago:</strong> %s</p>
+                    <div style="padding:24px 20px;background-color:#ffffff;">
+                        <p style="color:#555;">Hola <strong style="color:#3d3d3d;">%s</strong>,</p>
+                        <p style="color:#555;">Tu pedido ha sido confirmado y el pago procesado exitosamente.</p>
+                        <div style="background-color:#f9f9f9;border-radius:8px;padding:16px;margin:16px 0;">
+                            <p style="margin:4px 0;color:#555;"><strong>Pedido:</strong> %s</p>
+                            <p style="margin:4px 0;color:#555;"><strong>Referencia de pago:</strong> %s</p>
+                            <p style="margin:4px 0;color:#555;"><strong>Fecha:</strong> %s</p>
+                            <p style="margin:4px 0;color:#555;"><strong>Sede de despacho:</strong> %s</p>
+                            <p style="margin:4px 0;color:#555;"><strong>Método de pago:</strong> %s</p>
+                        </div>
                         %s
                         %s
-                        <h3>Detalles del pedido:</h3>
+                        <h3 style="color:#3d3d3d;margin:20px 0 8px;">Detalles del pedido:</h3>
                         <table style="width:100%%;border-collapse:collapse;">
                             <thead>
-                                <tr style="background-color:#f2f2f2;">
-                                    <th style="padding:8px;border:1px solid #ddd;text-align:left;">Producto</th>
-                                    <th style="padding:8px;border:1px solid #ddd;text-align:center;">Cantidad</th>
-                                    <th style="padding:8px;border:1px solid #ddd;text-align:right;">Precio</th>
-                                    <th style="padding:8px;border:1px solid #ddd;text-align:left;">Notas</th>
+                                <tr style="background-color:#f5f5f5;">
+                                    <th style="padding:8px;border:1px solid #eee;text-align:left;color:#555;">Producto</th>
+                                    <th style="padding:8px;border:1px solid #eee;text-align:center;color:#555;">Cantidad</th>
+                                    <th style="padding:8px;border:1px solid #eee;text-align:right;color:#555;">Precio</th>
+                                    <th style="padding:8px;border:1px solid #eee;text-align:left;color:#555;">Notas</th>
                                 </tr>
                             </thead>
                             <tbody>%s</tbody>
                         </table>
-                        <hr style="margin:20px 0;">
-                        <p style="text-align:right;color:#555;">Costo de Envío (Zona: %s): $%,.0f</p>
-                        <p style="text-align:right;font-size:18px;"><strong>Total: $%,.0f</strong></p>
+                        <hr style="margin:20px 0;border:none;border-top:1px solid #eee;">
+                        <p style="text-align:right;color:#888;margin:4px 0;">Costo de Envío (Zona: %s): $%,.0f</p>
+                        <p style="text-align:right;font-size:18px;color:#3d3d3d;margin:8px 0;"><strong>Total: $%,.0f</strong></p>
+                        %s
                     </div>
-                    <div style="background-color:#f2f2f2;padding:10px;text-align:center;color:#666;">
-                        <p>Gracias por tu compra</p>
+                    <div style="background-color:#2c2c2c;padding:20px;text-align:center;border-radius:0 0 8px 8px;">
+                        <p style="color:#999;font-size:13px;margin:0;">Gracias por tu compra</p>
+                        <p style="color:#666;font-size:11px;margin:6px 0 0;">%s</p>
                     </div>
                 </body>
                 </html>
                 """.formatted(
+                logoHtml,
+                nombreSitio,
                 pedido.getCliente().getNombre(),
                 pedido.getCodigo() != null ? pedido.getCodigo() : "N/A",
                 pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A",
@@ -211,11 +258,18 @@ public class EmailServiceImpl implements EmailService {
                 notasEntregaHtml,
                 detallesHtml,
                 zonaEnvio, costoEnvio,
-                pedido.getTotal()
+                pedido.getTotal(),
+                reviewSectionHtml,
+                nombreSitio
         );
     }
 
     private String construirHtmlNuevaVenta(Pedido pedido) {
+        ConfiguracionTienda config = configuracionService.obtenerConfiguracion();
+        String logoUrl = config.getLogoUrl() != null ? config.getLogoUrl() : "";
+        String nombreSitio = config.getNombreSitio() != null ? config.getNombreSitio() : "TAO Boutique Floral";
+        Integer sedeId = pedido.getSede() != null ? pedido.getSede().getId() : null;
+
         String clienteNombre = pedido.getCliente() != null ? pedido.getCliente().getNombre() : "N/A";
         String clienteEmail = pedido.getCliente() != null ? pedido.getCliente().getEmail() : "N/A";
         String clienteTelefono = pedido.getCliente() != null ? pedido.getCliente().getTelefono() : "N/A";
@@ -227,12 +281,20 @@ public class EmailServiceImpl implements EmailService {
                         ? detalle.getProducto().getNombre() : "Producto eliminado";
                 String nota = detalle.getNotaPersonalizacion() != null
                         ? detalle.getNotaPersonalizacion() : "N/A";
+
+                String productUrl = (detalle.getProducto() != null && sedeId != null)
+                        ? frontendUrl + "/tienda/sede/" + sedeId + "/producto/" + detalle.getProducto().getId()
+                        : "#";
+                String linkedNombre = String.format(
+                        "<a href='%s' style='color:#E5BE6F;text-decoration:none;font-weight:bold;'>%s</a>",
+                        productUrl, nombreProducto);
+
                 detallesHtml.append(String.format(
-                        "<tr><td style='padding:8px;border:1px solid #ddd;'>%s</td>" +
-                        "<td style='padding:8px;border:1px solid #ddd;text-align:center;'>%d</td>" +
-                        "<td style='padding:8px;border:1px solid #ddd;text-align:right;'>$%,.0f</td>" +
-                        "<td style='padding:8px;border:1px solid #ddd;'>%s</td></tr>",
-                        nombreProducto, detalle.getCantidad(), detalle.getPrecioUnitario(), nota));
+                        "<tr><td style='padding:8px;border:1px solid #eee;'>%s</td>" +
+                        "<td style='padding:8px;border:1px solid #eee;text-align:center;'>%d</td>" +
+                        "<td style='padding:8px;border:1px solid #eee;text-align:right;'>$%,.0f</td>" +
+                        "<td style='padding:8px;border:1px solid #eee;'>%s</td></tr>",
+                        linkedNombre, detalle.getCantidad(), detalle.getPrecioUnitario(), nota));
             }
         }
 
@@ -245,8 +307,8 @@ public class EmailServiceImpl implements EmailService {
             Direccion d = pedido.getDireccion();
             String detalles = d.getDetalles() != null ? d.getDetalles() : "Sin detalles adicionales";
             direccionHtml = """
-                    <h3>Dirección de entrega:</h3>
-                    <ul style="list-style:none;padding:0;">
+                    <h3 style="color:#3d3d3d;margin:20px 0 8px;">Dirección de entrega:</h3>
+                    <ul style="list-style:none;padding:0;color:#555;">
                         <li><strong>Alias:</strong> %s</li>
                         <li><strong>Dirección:</strong> %s</li>
                         <li><strong>Ciudad:</strong> %s</li>
@@ -270,44 +332,57 @@ public class EmailServiceImpl implements EmailService {
         }
         BigDecimal costoEnvio = pedido.getCostoEnvio() != null ? pedido.getCostoEnvio() : BigDecimal.ZERO;
 
+        String logoHtml = !logoUrl.isEmpty()
+                ? "<img src='" + logoUrl + "' alt='Logo' width='80' style='border-radius:50%;margin-bottom:8px;' />"
+                : "";
+
         return """
                 <html>
-                <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-                    <div style="background-color:#2196F3;color:white;padding:20px;text-align:center;">
-                        <h1>Nueva Venta - %s</h1>
+                <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background-color:#fafafa;">
+                    <div style="background-color:#fafaf9;padding:28px 20px;text-align:center;border-bottom:3px solid #E5BE6F;">
+                        %s
+                        <h1 style="color:#3d3d3d;font-size:20px;margin:0;">Nueva Venta</h1>
+                        <p style="color:#999;font-size:13px;margin:4px 0 0;">%s</p>
                     </div>
-                    <div style="padding:20px;">
-                        <p>Se ha registrado una <strong>nueva venta</strong> en tu sede.</p>
-                        <h3>Pedido: %s</h3>
-                        <p><strong>Referencia de pago:</strong> %s</p>
-                        <p><strong>Fecha:</strong> %s</p>
-                        <p><strong>Método de pago:</strong> %s</p>
-                        <ul style="list-style:none;padding:0;">
-                            <li><strong>Cliente:</strong> %s</li>
-                            <li><strong>Email:</strong> %s</li>
-                            <li><strong>Teléfono:</strong> %s</li>
-                        </ul>
+                    <div style="padding:24px 20px;background-color:#ffffff;">
+                        <p style="color:#555;">Se ha registrado una <strong style="color:#3d3d3d;">nueva venta</strong> en tu sede.</p>
+                        <div style="background-color:#f9f9f9;border-radius:8px;padding:16px;margin:16px 0;">
+                            <p style="margin:4px 0;color:#555;"><strong>Pedido:</strong> %s</p>
+                            <p style="margin:4px 0;color:#555;"><strong>Referencia de pago:</strong> %s</p>
+                            <p style="margin:4px 0;color:#555;"><strong>Fecha:</strong> %s</p>
+                            <p style="margin:4px 0;color:#555;"><strong>Método de pago:</strong> %s</p>
+                        </div>
+                        <div style="background-color:#f9f9f9;border-radius:8px;padding:16px;margin:16px 0;">
+                            <p style="margin:4px 0;color:#555;"><strong>Cliente:</strong> %s</p>
+                            <p style="margin:4px 0;color:#555;"><strong>Email:</strong> %s</p>
+                            <p style="margin:4px 0;color:#555;"><strong>Teléfono:</strong> %s</p>
+                        </div>
                         %s
                         %s
-                        <h3>Detalles:</h3>
+                        <h3 style="color:#3d3d3d;margin:20px 0 8px;">Detalles:</h3>
                         <table style="width:100%%;border-collapse:collapse;">
                             <thead>
-                                <tr style="background-color:#f2f2f2;">
-                                    <th style="padding:8px;border:1px solid #ddd;text-align:left;">Producto</th>
-                                    <th style="padding:8px;border:1px solid #ddd;text-align:center;">Cantidad</th>
-                                    <th style="padding:8px;border:1px solid #ddd;text-align:right;">Precio</th>
-                                    <th style="padding:8px;border:1px solid #ddd;text-align:left;">Notas</th>
+                                <tr style="background-color:#f5f5f5;">
+                                    <th style="padding:8px;border:1px solid #eee;text-align:left;color:#555;">Producto</th>
+                                    <th style="padding:8px;border:1px solid #eee;text-align:center;color:#555;">Cantidad</th>
+                                    <th style="padding:8px;border:1px solid #eee;text-align:right;color:#555;">Precio</th>
+                                    <th style="padding:8px;border:1px solid #eee;text-align:left;color:#555;">Notas</th>
                                 </tr>
                             </thead>
                             <tbody>%s</tbody>
                         </table>
-                        <hr style="margin:20px 0;">
-                        <p style="text-align:right;color:#555;">Costo de Envío (Zona: %s): $%,.0f</p>
-                        <p style="text-align:right;font-size:18px;"><strong>Total: $%,.0f</strong></p>
+                        <hr style="margin:20px 0;border:none;border-top:1px solid #eee;">
+                        <p style="text-align:right;color:#888;margin:4px 0;">Costo de Envío (Zona: %s): $%,.0f</p>
+                        <p style="text-align:right;font-size:18px;color:#3d3d3d;margin:8px 0;"><strong>Total: $%,.0f</strong></p>
+                    </div>
+                    <div style="background-color:#2c2c2c;padding:20px;text-align:center;border-radius:0 0 8px 8px;">
+                        <p style="color:#999;font-size:13px;margin:0;">Notificación de venta</p>
+                        <p style="color:#666;font-size:11px;margin:6px 0 0;">%s</p>
                     </div>
                 </body>
                 </html>
                 """.formatted(
+                logoHtml,
                 pedido.getSede().getNombre(),
                 pedido.getCodigo() != null ? pedido.getCodigo() : "N/A",
                 pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A",
@@ -320,11 +395,17 @@ public class EmailServiceImpl implements EmailService {
                 notasEntregaHtml,
                 detallesHtml,
                 zonaEnvio, costoEnvio,
-                pedido.getTotal()
+                pedido.getTotal(),
+                nombreSitio
         );
     }
 
     private String construirHtmlCopiaMaestro(Pedido pedido) {
+        ConfiguracionTienda config = configuracionService.obtenerConfiguracion();
+        String logoUrl = config.getLogoUrl() != null ? config.getLogoUrl() : "";
+        String nombreSitio = config.getNombreSitio() != null ? config.getNombreSitio() : "TAO Boutique Floral";
+        Integer sedeId = pedido.getSede() != null ? pedido.getSede().getId() : null;
+
         String clienteNombre = pedido.getCliente() != null ? pedido.getCliente().getNombre() : "N/A";
         String clienteEmail = pedido.getCliente() != null ? pedido.getCliente().getEmail() : "N/A";
         String clienteTelefono = pedido.getCliente() != null ? pedido.getCliente().getTelefono() : "N/A";
@@ -336,12 +417,20 @@ public class EmailServiceImpl implements EmailService {
                         ? detalle.getProducto().getNombre() : "Producto eliminado";
                 String nota = detalle.getNotaPersonalizacion() != null
                         ? detalle.getNotaPersonalizacion() : "N/A";
+
+                String productUrl = (detalle.getProducto() != null && sedeId != null)
+                        ? frontendUrl + "/tienda/sede/" + sedeId + "/producto/" + detalle.getProducto().getId()
+                        : "#";
+                String linkedNombre = String.format(
+                        "<a href='%s' style='color:#E5BE6F;text-decoration:none;font-weight:bold;'>%s</a>",
+                        productUrl, nombreProducto);
+
                 detallesHtml.append(String.format(
-                        "<tr><td style='padding:8px;border:1px solid #ddd;'>%s</td>" +
-                        "<td style='padding:8px;border:1px solid #ddd;text-align:center;'>%d</td>" +
-                        "<td style='padding:8px;border:1px solid #ddd;text-align:right;'>$%,.0f</td>" +
-                        "<td style='padding:8px;border:1px solid #ddd;'>%s</td></tr>",
-                        nombreProducto, detalle.getCantidad(), detalle.getPrecioUnitario(), nota));
+                        "<tr><td style='padding:8px;border:1px solid #eee;'>%s</td>" +
+                        "<td style='padding:8px;border:1px solid #eee;text-align:center;'>%d</td>" +
+                        "<td style='padding:8px;border:1px solid #eee;text-align:right;'>$%,.0f</td>" +
+                        "<td style='padding:8px;border:1px solid #eee;'>%s</td></tr>",
+                        linkedNombre, detalle.getCantidad(), detalle.getPrecioUnitario(), nota));
             }
         }
 
@@ -354,8 +443,8 @@ public class EmailServiceImpl implements EmailService {
             Direccion d = pedido.getDireccion();
             String detalles = d.getDetalles() != null ? d.getDetalles() : "Sin detalles adicionales";
             direccionHtml = """
-                    <h3>Dirección de entrega:</h3>
-                    <ul style="list-style:none;padding:0;">
+                    <h3 style="color:#3d3d3d;margin:20px 0 8px;">Dirección de entrega:</h3>
+                    <ul style="list-style:none;padding:0;color:#555;">
                         <li><strong>Alias:</strong> %s</li>
                         <li><strong>Dirección:</strong> %s</li>
                         <li><strong>Ciudad:</strong> %s</li>
@@ -381,46 +470,57 @@ public class EmailServiceImpl implements EmailService {
 
         String nombreSede = pedido.getSede() != null ? pedido.getSede().getNombre() : "Sede no disponible";
 
+        String logoHtml = !logoUrl.isEmpty()
+                ? "<img src='" + logoUrl + "' alt='Logo' width='80' style='border-radius:50%;margin-bottom:8px;' />"
+                : "";
+
         return """
                 <html>
-                <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-                    <div style="background-color:#9C27B0;color:white;padding:20px;text-align:center;">
-                        <h1>NUEVA VENTA - %s</h1>
+                <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background-color:#fafafa;">
+                    <div style="background-color:#fafaf9;padding:28px 20px;text-align:center;border-bottom:3px solid #E5BE6F;">
+                        %s
+                        <h1 style="color:#3d3d3d;font-size:20px;margin:0;">Nueva Venta</h1>
+                        <p style="color:#999;font-size:13px;margin:4px 0 0;">Sede: %s</p>
                     </div>
-                    <div style="padding:20px;">
-                        <p style="font-size:16px;"><strong>Sede:</strong> %s</p>
-                        <p>Se ha registrado una <strong>nueva venta</strong> en el sistema.</p>
-                        <h3>Pedido: %s</h3>
-                        <p><strong>Referencia de pago:</strong> %s</p>
-                        <p><strong>Fecha:</strong> %s</p>
-                        <p><strong>Método de pago:</strong> %s</p>
-                        <ul style="list-style:none;padding:0;">
-                            <li><strong>Cliente:</strong> %s</li>
-                            <li><strong>Email:</strong> %s</li>
-                            <li><strong>Teléfono:</strong> %s</li>
-                        </ul>
+                    <div style="padding:24px 20px;background-color:#ffffff;">
+                        <p style="color:#555;">Se ha registrado una <strong style="color:#3d3d3d;">nueva venta</strong> en el sistema.</p>
+                        <div style="background-color:#f9f9f9;border-radius:8px;padding:16px;margin:16px 0;">
+                            <p style="margin:4px 0;color:#555;"><strong>Pedido:</strong> %s</p>
+                            <p style="margin:4px 0;color:#555;"><strong>Referencia de pago:</strong> %s</p>
+                            <p style="margin:4px 0;color:#555;"><strong>Fecha:</strong> %s</p>
+                            <p style="margin:4px 0;color:#555;"><strong>Método de pago:</strong> %s</p>
+                        </div>
+                        <div style="background-color:#f9f9f9;border-radius:8px;padding:16px;margin:16px 0;">
+                            <p style="margin:4px 0;color:#555;"><strong>Cliente:</strong> %s</p>
+                            <p style="margin:4px 0;color:#555;"><strong>Email:</strong> %s</p>
+                            <p style="margin:4px 0;color:#555;"><strong>Teléfono:</strong> %s</p>
+                        </div>
                         %s
                         %s
-                        <h3>Detalles:</h3>
+                        <h3 style="color:#3d3d3d;margin:20px 0 8px;">Detalles:</h3>
                         <table style="width:100%%;border-collapse:collapse;">
                             <thead>
-                                <tr style="background-color:#f2f2f2;">
-                                    <th style="padding:8px;border:1px solid #ddd;text-align:left;">Producto</th>
-                                    <th style="padding:8px;border:1px solid #ddd;text-align:center;">Cantidad</th>
-                                    <th style="padding:8px;border:1px solid #ddd;text-align:right;">Precio</th>
-                                    <th style="padding:8px;border:1px solid #ddd;text-align:left;">Notas</th>
+                                <tr style="background-color:#f5f5f5;">
+                                    <th style="padding:8px;border:1px solid #eee;text-align:left;color:#555;">Producto</th>
+                                    <th style="padding:8px;border:1px solid #eee;text-align:center;color:#555;">Cantidad</th>
+                                    <th style="padding:8px;border:1px solid #eee;text-align:right;color:#555;">Precio</th>
+                                    <th style="padding:8px;border:1px solid #eee;text-align:left;color:#555;">Notas</th>
                                 </tr>
                             </thead>
                             <tbody>%s</tbody>
                         </table>
-                        <hr style="margin:20px 0;">
-                        <p style="text-align:right;color:#555;">Costo de Envío (Zona: %s): $%,.0f</p>
-                        <p style="text-align:right;font-size:18px;"><strong>Total: $%,.0f</strong></p>
+                        <hr style="margin:20px 0;border:none;border-top:1px solid #eee;">
+                        <p style="text-align:right;color:#888;margin:4px 0;">Costo de Envío (Zona: %s): $%,.0f</p>
+                        <p style="text-align:right;font-size:18px;color:#3d3d3d;margin:8px 0;"><strong>Total: $%,.0f</strong></p>
+                    </div>
+                    <div style="background-color:#2c2c2c;padding:20px;text-align:center;border-radius:0 0 8px 8px;">
+                        <p style="color:#999;font-size:13px;margin:0;">Notificación de venta</p>
+                        <p style="color:#666;font-size:11px;margin:6px 0 0;">%s</p>
                     </div>
                 </body>
                 </html>
                 """.formatted(
-                nombreSede,
+                logoHtml,
                 nombreSede,
                 pedido.getCodigo() != null ? pedido.getCodigo() : "N/A",
                 pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "N/A",
@@ -433,7 +533,8 @@ public class EmailServiceImpl implements EmailService {
                 notasEntregaHtml,
                 detallesHtml,
                 zonaEnvio, costoEnvio,
-                pedido.getTotal()
+                pedido.getTotal(),
+                nombreSitio
         );
     }
 }
