@@ -39,6 +39,7 @@ public class PedidoHistorialDTO {
     @Setter
     @Builder
     public static class DetalleHistorialDTO {
+        private Integer productoId;
         private String productoNombre;
         private String productoSku;
         private Integer cantidad;
