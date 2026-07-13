@@ -2,6 +2,8 @@ package com.floristeria.floristeria.exception;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -11,9 +13,12 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import jakarta.persistence.EntityNotFoundException;
+import com.floristeria.floristeria.exception.ZonaExcluidaException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(AccesoDenegadoSedeException.class)
     public ResponseEntity<Map<String, Object>> handleAccesoDenegadoSedeException(AccesoDenegadoSedeException ex) {
@@ -22,6 +27,16 @@ public class GlobalExceptionHandler {
                         "status", 403,
                         "error", "Forbidden",
                         "mensaje", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ZonaExcluidaException.class)
+    public ResponseEntity<Map<String, Object>> handleZonaExcluidaException(ZonaExcluidaException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of(
+                        "status", 400,
+                        "error", "Bad Request",
+                        "mensaje", ex.getMessage(),
+                        "codigo", "ZONA_EXCLUIDA"));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
@@ -84,10 +99,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
+        log.error("Error interno", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of(
                         "status", 500,
                         "error", "Internal Server Error",
-                        "mensaje", "Error interno del servidor: " + ex.getMessage()));
+                        "mensaje", "Error interno del servidor: " + (ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName())));
     }
 }
