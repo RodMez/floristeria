@@ -44,6 +44,6 @@ wompi:
   events-secret: ${WOMPI_EVENTS_SECRET:test_events_XXXXX}
 
 brevo:
-  api-key: ${BREVO_API_KEY}
-  sender-email: ${BREVO_SENDER_EMAIL}
-  sender-name: ${BREVO_SENDER_NAME}
+  api-key: ${BREVO_API_KEY:placeholder-key}
+  sender-email: ${BREVO_SENDER_EMAIL:placeholder@example.com}
+  sender-name: ${BREVO_SENDER_NAME:Placeholder}
