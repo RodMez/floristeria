@@ -60,6 +60,7 @@ public class ZonaDomicilioServiceImpl implements ZonaDomicilioService {
                 .localidad(localidad)
                 .barrio(barrio)
                 .precio(request.getPrecio())
+                .excluido(Boolean.TRUE.equals(request.getExcluido()))
                 .build();
 
         zona = zonaDomicilioRepository.save(zona);
@@ -85,6 +86,7 @@ public class ZonaDomicilioServiceImpl implements ZonaDomicilioService {
         zona.setLocalidad(localidad);
         zona.setBarrio(barrio);
         zona.setPrecio(request.getPrecio());
+        zona.setExcluido(Boolean.TRUE.equals(request.getExcluido()));
 
         zona = zonaDomicilioRepository.save(zona);
         return toResponseDTO(zona);
@@ -116,6 +118,7 @@ public class ZonaDomicilioServiceImpl implements ZonaDomicilioService {
                 .localidad(localidad)
                 .barrio(barrio)
                 .precio(request.getPrecio())
+                .excluido(Boolean.TRUE.equals(request.getExcluido()))
                 .build();
 
         zona = zonaDomicilioRepository.save(zona);
@@ -141,6 +144,7 @@ public class ZonaDomicilioServiceImpl implements ZonaDomicilioService {
         zona.setLocalidad(localidad);
         zona.setBarrio(barrio);
         zona.setPrecio(request.getPrecio());
+        zona.setExcluido(Boolean.TRUE.equals(request.getExcluido()));
 
         zona = zonaDomicilioRepository.save(zona);
         return toResponseDTO(zona);
@@ -167,6 +171,7 @@ public class ZonaDomicilioServiceImpl implements ZonaDomicilioService {
                 .localidad(zona.getLocalidad())
                 .barrio(zona.getBarrio())
                 .precio(zona.getPrecio())
+                .excluido(zona.getExcluido())
                 .build();
     }
 }

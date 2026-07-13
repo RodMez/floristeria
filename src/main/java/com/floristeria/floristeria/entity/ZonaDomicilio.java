@@ -37,6 +37,9 @@ public class ZonaDomicilio {
     @Column(name = "precio", nullable = false)
     private BigDecimal precio;
 
+    @Column(name = "excluido", nullable = false)
+    private Boolean excluido = false;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 }
