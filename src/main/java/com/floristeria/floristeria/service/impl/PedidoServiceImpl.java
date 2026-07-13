@@ -11,6 +11,7 @@ import com.floristeria.floristeria.entity.*;
 import com.floristeria.floristeria.repository.*;
 import com.floristeria.floristeria.service.EmailService;
 import com.floristeria.floristeria.service.PedidoService;
+import com.floristeria.floristeria.exception.ZonaExcluidaException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -130,6 +131,11 @@ public class PedidoServiceImpl implements PedidoService {
         // Validar que la zona pertenece a la sede
         if (!zonaDomicilio.getSede().getId().equals(request.getSedeId())) {
             throw new IllegalArgumentException("La zona de domicilio de la dirección no pertenece a esta sede");
+        }
+
+        // Validar que la zona no esté excluida del domicilio
+        if (Boolean.TRUE.equals(zonaDomicilio.getExcluido())) {
+            throw new ZonaExcluidaException("Esta zona de domicilio no está disponible para domicilio. Puedes contactarnos por WhatsApp para realizar tu pedido.");
         }
 
         // Calcular total y validar stock desde Inventario
@@ -311,6 +317,7 @@ public class PedidoServiceImpl implements PedidoService {
                 .clienteNombre(cliente != null ? cliente.getNombre() : "Cliente eliminado")
                 .clienteEmail(cliente != null ? cliente.getEmail() : "N/A")
                 .clienteTelefono(cliente != null ? cliente.getTelefono() : "N/A")
+                .sedeId(sede != null ? sede.getId() : null)
                 .sedeNombre(sede != null ? sede.getNombre() : (pedido.getSedeNombre() != null ? pedido.getSedeNombre() : "Sede eliminada"))
                 .metodoPago(pedido.getMetodoPago())
                 .referenciaPago(pedido.getReferenciaPago())
