@@ -17,6 +17,7 @@ public class PedidoAdminResponseDTO {
     private String clienteNombre;
     private String clienteEmail;
     private String clienteTelefono;
+    private Integer sedeId;
     private String sedeNombre;
     private String metodoPago;
     private String referenciaPago;
