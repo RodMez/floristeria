@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,4 +30,10 @@ public interface PedidoRepository extends JpaRepository<Pedido, Integer> {
 
     @Query("SELECT CASE WHEN COUNT(dp) > 0 THEN true ELSE false END FROM Pedido p JOIN p.detalles dp WHERE p.cliente.id = :clienteId AND dp.producto.id = :productoId AND p.estado = :estado AND p.deletedAt IS NULL")
     boolean existsByClienteIdAndProductoIdAndEstado(@Param("clienteId") Integer clienteId, @Param("productoId") Integer productoId, @Param("estado") EstadoPedido estado);
+
+    @Query(value = "SELECT DISTINCT p.* FROM pedidos p " +
+           "WHERE p.deleted_at IS NULL " +
+           "ORDER BY p.creado_en DESC",
+           nativeQuery = true)
+    List<Pedido> findAllPedidosParaExportar();
 }
