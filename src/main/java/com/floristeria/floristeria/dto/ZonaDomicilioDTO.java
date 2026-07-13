@@ -24,6 +24,8 @@ public class ZonaDomicilioDTO {
         @NotNull(message = "El precio es obligatorio")
         @DecimalMin(value = "0.00", message = "El precio no puede ser negativo")
         private BigDecimal precio;
+
+        private Boolean excluido;
     }
 
     @Getter
@@ -36,5 +38,6 @@ public class ZonaDomicilioDTO {
         private String localidad;
         private String barrio;
         private BigDecimal precio;
+        private Boolean excluido;
     }
 }
