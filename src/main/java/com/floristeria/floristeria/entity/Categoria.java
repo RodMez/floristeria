@@ -18,16 +18,33 @@ import java.util.List;
 @Builder
 public class Categoria {
 
+    public enum CategoriaTipo {
+        CATALOGO, ADICIONAL
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "nombre", nullable = false)
-    private String nombre;
-
     @Builder.Default
     @ManyToMany(mappedBy = "categorias", fetch = FetchType.LAZY)
     private List<Producto> productos = new ArrayList<>();
+
+    @Column(name = "nombre", nullable = false)
+    private String nombre;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo", nullable = false)
+    @Builder.Default
+    private CategoriaTipo tipo = CategoriaTipo.CATALOGO;
+
+    @Column(name = "mostrar_en_catalogo", nullable = false)
+    @Builder.Default
+    private Boolean mostrarEnCatalogo = true;
+
+    @Column(name = "orden", nullable = false)
+    @Builder.Default
+    private Integer orden = 0;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;

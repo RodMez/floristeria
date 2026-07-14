@@ -11,4 +11,7 @@ public class CategoriaResponseDTO {
 
     private Integer id;
     private String nombre;
+    private String tipo;
+    private Boolean mostrarEnCatalogo;
+    private Integer orden;
 }

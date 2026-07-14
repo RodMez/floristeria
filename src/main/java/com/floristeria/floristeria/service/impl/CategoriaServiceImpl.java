@@ -3,6 +3,7 @@ package com.floristeria.floristeria.service.impl;
 import com.floristeria.floristeria.dto.CategoriaRequestDTO;
 import com.floristeria.floristeria.dto.CategoriaResponseDTO;
 import com.floristeria.floristeria.entity.Categoria;
+import com.floristeria.floristeria.entity.Categoria.CategoriaTipo;
 import com.floristeria.floristeria.repository.CategoriaRepository;
 import com.floristeria.floristeria.service.CategoriaService;
 
@@ -36,6 +37,16 @@ public class CategoriaServiceImpl implements CategoriaService {
         Categoria categoria = new Categoria();
         categoria.setNombre(requestDTO.getNombre());
 
+        if (requestDTO.getTipo() != null) {
+            categoria.setTipo(CategoriaTipo.valueOf(requestDTO.getTipo()));
+        }
+        if (requestDTO.getMostrarEnCatalogo() != null) {
+            categoria.setMostrarEnCatalogo(requestDTO.getMostrarEnCatalogo());
+        }
+        if (requestDTO.getOrden() != null) {
+            categoria.setOrden(requestDTO.getOrden());
+        }
+
         Categoria categoriaGuardada = categoriaRepository.save(categoria);
         return toResponseDTO(categoriaGuardada);
     }
@@ -46,6 +57,16 @@ public class CategoriaServiceImpl implements CategoriaService {
                 .orElseThrow(() -> new EntityNotFoundException("Categoría no encontrada con id: " + id));
 
         categoria.setNombre(requestDTO.getNombre());
+
+        if (requestDTO.getTipo() != null) {
+            categoria.setTipo(CategoriaTipo.valueOf(requestDTO.getTipo()));
+        }
+        if (requestDTO.getMostrarEnCatalogo() != null) {
+            categoria.setMostrarEnCatalogo(requestDTO.getMostrarEnCatalogo());
+        }
+        if (requestDTO.getOrden() != null) {
+            categoria.setOrden(requestDTO.getOrden());
+        }
 
         Categoria categoriaActualizada = categoriaRepository.save(categoria);
         return toResponseDTO(categoriaActualizada);
@@ -63,6 +84,9 @@ public class CategoriaServiceImpl implements CategoriaService {
         return CategoriaResponseDTO.builder()
                 .id(categoria.getId())
                 .nombre(categoria.getNombre())
+                .tipo(categoria.getTipo().name())
+                .mostrarEnCatalogo(categoria.getMostrarEnCatalogo())
+                .orden(categoria.getOrden())
                 .build();
     }
 }
