@@ -3,7 +3,10 @@ package com.floristeria.floristeria.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -13,10 +16,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.floristeria.floristeria.dto.ProductoCatalogoDTO;
 import com.floristeria.floristeria.dto.ProductoCatalogoDetalleDTO;
 import com.floristeria.floristeria.entity.Categoria;
+import com.floristeria.floristeria.entity.Categoria.CategoriaTipo;
 import com.floristeria.floristeria.entity.Inventario;
 import com.floristeria.floristeria.entity.Producto;
+import com.floristeria.floristeria.entity.ProductoComplementario;
 import com.floristeria.floristeria.entity.Sede;
 import com.floristeria.floristeria.repository.InventarioRepository;
+import com.floristeria.floristeria.repository.ProductoComplementarioRepository;
 import com.floristeria.floristeria.repository.ReseñaRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -28,6 +34,7 @@ public class CatalogoService {
 
     private final InventarioRepository inventarioRepository;
     private final ReseñaRepository reseñaRepository;
+    private final ProductoComplementarioRepository complementarioRepository;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -35,31 +42,16 @@ public class CatalogoService {
     @Transactional(readOnly = true)
     public List<ProductoCatalogoDTO> obtenerCatalogoPorSede(Integer sedeId) {
         return inventarioRepository.findBySede_IdAndDisponibleTrueAndStockGreaterThan(sedeId, 0).stream()
-                .map(inv -> {
-                    Producto producto = inv.getProducto();
-                    List<String> categoriasNombres = producto.getCategorias().stream()
-                            .map(Categoria::getNombre)
-                            .collect(Collectors.toList());
-
-                    BigDecimal precioConDescuento = calcularPrecioConDescuento(inv.getPrecio(), inv.getDescuentoPorcentaje());
-                    Integer prodId = producto.getId();
-
-                    return ProductoCatalogoDTO.builder()
-                            .productoId(prodId)
-                            .nombre(producto.getNombre())
-                            .descripcion(producto.getDescripcion())
-                            .imagenUrl(producto.getImagenUrl())
-                            .sku(producto.getSku())
-                            .categoriasNombres(categoriasNombres)
-                            .precio(inv.getPrecio())
-                            .descuentoPorcentaje(inv.getDescuentoPorcentaje())
-                            .precioConDescuento(precioConDescuento)
-                            .stock(inv.getStock())
-                            .disponible(true)
-                            .ratingAverage(reseñaRepository.findAverageRatingByProductoId(prodId))
-                            .ratingCount(reseñaRepository.findCountByProductoId(prodId))
-                            .build();
+                .filter(inv -> {
+                    Producto p = inv.getProducto();
+                    return p.getCategorias().stream()
+                            .allMatch(c -> c.getMostrarEnCatalogo());
                 })
+                .map(this::toCatalogoDTO)
+                .sorted(Comparator.comparingInt(
+                        (ProductoCatalogoDTO p) -> p.getDescuentoPorcentaje() != null
+                                ? -p.getDescuentoPorcentaje()
+                                : 0))
                 .collect(Collectors.toList());
     }
 
@@ -82,6 +74,8 @@ public class CatalogoService {
 
         Integer prodId = p.getId();
 
+        List<ProductoCatalogoDTO> complementos = obtenerComplementos(productoId, sedeId);
+
         return ProductoCatalogoDetalleDTO.builder()
                 .inventarioId(inv.getId())
                 .productoId(prodId)
@@ -99,6 +93,7 @@ public class CatalogoService {
                 .categoriasNombres(categoriasNombres)
                 .ratingAverage(reseñaRepository.findAverageRatingByProductoId(prodId))
                 .ratingCount(reseñaRepository.findCountByProductoId(prodId))
+                .productosComplementarios(complementos)
                 .build();
     }
 
@@ -139,6 +134,111 @@ public class CatalogoService {
         xml.append("</rss>");
 
         return xml.toString();
+    }
+
+    private List<ProductoCatalogoDTO> obtenerComplementos(Integer productoId, Integer sedeId) {
+        List<ProductoComplementario> curados = complementarioRepository
+                .findByProductoIdAndSede(productoId, sedeId);
+
+        Set<Integer> idsCurados = curados.stream()
+                .map(pc -> pc.getComplementario().getId())
+                .collect(Collectors.toSet());
+
+        Set<Integer> complementariosDeOtrasSedes = complementarioRepository.findComplementarioIdsForOtherSedes(sedeId);
+
+        List<ProductoCatalogoDTO> complementos = curados.stream()
+                .map(pc -> {
+                    Inventario inv = inventarioRepository
+                            .findByProducto_IdAndSede_Id(pc.getComplementario().getId(), sedeId);
+                    if (inv == null || inv.getStock() == null || inv.getStock() <= 0 || !inv.getDisponible()) {
+                        return null;
+                    }
+                    return toCatalogoDTO(inv);
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        List<Inventario> relleno = inventarioRepository
+                .findBySede_IdAndDisponibleTrueAndStockGreaterThan(sedeId, 0)
+                .stream()
+                .filter(inv -> {
+                    Producto p = inv.getProducto();
+                    return !p.getId().equals(productoId)
+                            && !idsCurados.contains(p.getId())
+                            && !complementariosDeOtrasSedes.contains(p.getId())
+                            && p.getCategorias().stream()
+                                    .anyMatch(c -> c.getTipo() == CategoriaTipo.ADICIONAL);
+                })
+                .collect(Collectors.toList());
+
+        complementos.addAll(relleno.stream().map(this::toCatalogoDTO).toList());
+
+        return complementos;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductoCatalogoDTO> obtenerComplementosPorSede(Integer sedeId) {
+        List<ProductoComplementario> curados = complementarioRepository.findBySede(sedeId);
+
+        Set<Integer> idsCurados = curados.stream()
+                .map(pc -> pc.getComplementario().getId())
+                .collect(Collectors.toSet());
+
+        Set<Integer> todosLosComplementarios = complementarioRepository.findAllComplementarioIds();
+
+        List<ProductoCatalogoDTO> complementos = curados.stream()
+                .map(pc -> {
+                    Inventario inv = inventarioRepository
+                            .findByProducto_IdAndSede_Id(pc.getComplementario().getId(), sedeId);
+                    if (inv == null || inv.getStock() == null || inv.getStock() <= 0 || !inv.getDisponible()) {
+                        return null;
+                    }
+                    return toCatalogoDTO(inv);
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        List<Inventario> relleno = inventarioRepository
+                .findBySede_IdAndDisponibleTrueAndStockGreaterThan(sedeId, 0)
+                .stream()
+                .filter(inv -> {
+                    Producto p = inv.getProducto();
+                    return !todosLosComplementarios.contains(p.getId())
+                            && p.getCategorias().stream()
+                                    .anyMatch(c -> c.getTipo() == CategoriaTipo.ADICIONAL);
+                })
+                .collect(Collectors.toList());
+
+        complementos.addAll(relleno.stream().map(this::toCatalogoDTO).toList());
+        return complementos;
+    }
+
+    private ProductoCatalogoDTO toCatalogoDTO(Inventario inv) {
+        Producto producto = inv.getProducto();
+        List<String> categoriasNombres = producto.getCategorias().stream()
+                .map(Categoria::getNombre)
+                .collect(Collectors.toList());
+
+        BigDecimal precioConDescuento = calcularPrecioConDescuento(
+                inv.getPrecio(), inv.getDescuentoPorcentaje());
+
+        Integer prodId = producto.getId();
+
+        return ProductoCatalogoDTO.builder()
+                .productoId(prodId)
+                .nombre(producto.getNombre())
+                .descripcion(producto.getDescripcion())
+                .imagenUrl(producto.getImagenUrl())
+                .sku(producto.getSku())
+                .categoriasNombres(categoriasNombres)
+                .precio(inv.getPrecio())
+                .descuentoPorcentaje(inv.getDescuentoPorcentaje())
+                .precioConDescuento(precioConDescuento)
+                .stock(inv.getStock())
+                .disponible(true)
+                .ratingAverage(reseñaRepository.findAverageRatingByProductoId(prodId))
+                .ratingCount(reseñaRepository.findCountByProductoId(prodId))
+                .build();
     }
 
     private BigDecimal calcularPrecioConDescuento(BigDecimal precio, Integer descuentoPorcentaje) {

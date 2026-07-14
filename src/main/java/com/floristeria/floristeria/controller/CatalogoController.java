@@ -36,6 +36,13 @@ public class CatalogoController {
         return ResponseEntity.ok(detalle);
     }
 
+    @GetMapping("/sede/{sedeId}/complementos")
+    public ResponseEntity<List<ProductoCatalogoDTO>> obtenerComplementosPorSede(
+            @PathVariable Integer sedeId) {
+        List<ProductoCatalogoDTO> complementos = catalogoService.obtenerComplementosPorSede(sedeId);
+        return ResponseEntity.ok(complementos);
+    }
+
     @GetMapping(value = "/meta-feed", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity<String> generarMetaFeed() {
         String xml = catalogoService.generarMetaFeedXml();
