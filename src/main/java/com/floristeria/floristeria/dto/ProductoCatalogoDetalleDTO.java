@@ -29,4 +29,5 @@ public class ProductoCatalogoDetalleDTO {
     private List<String> categoriasNombres;
     private Double ratingAverage;
     private Integer ratingCount;
+    private List<ProductoCatalogoDTO> productosComplementarios;
 }
