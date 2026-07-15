@@ -115,7 +115,18 @@ public class CatalogoService {
 
             String sku = p.getSku() != null ? p.getSku() : String.valueOf(p.getId());
             String id = sku + "-" + s.getId();
-            BigDecimal precioFinal = calcularPrecioConDescuento(inv.getPrecio(), inv.getDescuentoPorcentaje());
+            BigDecimal precioOriginal = inv.getPrecio().setScale(0, RoundingMode.HALF_UP);
+            BigDecimal precioFinal = calcularPrecioConDescuento(inv.getPrecio(), inv.getDescuentoPorcentaje()).setScale(0, RoundingMode.HALF_UP);
+            boolean tieneDescuento = inv.getDescuentoPorcentaje() != null && inv.getDescuentoPorcentaje() > 0;
+            int porcentajeDescuento = tieneDescuento ? inv.getDescuentoPorcentaje() : 0;
+
+            String productType = p.getCategorias() != null
+                    ? p.getCategorias().stream().map(Categoria::getNombre).collect(Collectors.joining(","))
+                    : "";
+
+            boolean tieneCategoriaAdicional = p.getCategorias() != null
+                    && p.getCategorias().stream().anyMatch(c -> c.getTipo() == Categoria.CategoriaTipo.ADICIONAL);
+            String tipoCategoria = tieneCategoriaAdicional ? "ADICIONAL" : "CATALOGO";
 
             xml.append("    <item>\n");
             xml.append("      <g:id>").append(escapeXml(id)).append("</g:id>\n");
@@ -126,7 +137,17 @@ public class CatalogoService {
             xml.append("      <g:brand>Floristería</g:brand>\n");
             xml.append("      <g:condition>new</g:condition>\n");
             xml.append("      <g:availability>in stock</g:availability>\n");
-            xml.append("      <g:price>").append(precioFinal).append(" COP</g:price>\n");
+            xml.append("      <g:price>").append(precioOriginal).append(" COP</g:price>\n");
+            if (tieneDescuento) {
+                xml.append("      <g:sale_price>").append(precioFinal).append(" COP</g:sale_price>\n");
+            }
+            xml.append("      <g:gender>unisex</g:gender>\n");
+            xml.append("      <g:product_type>").append(escapeXml(productType)).append("</g:product_type>\n");
+            xml.append("      <g:identifier_exists>false</g:identifier_exists>\n");
+            xml.append("      <g:inventory>").append(inv.getStock()).append("</g:inventory>\n");
+            xml.append("      <g:custom_label_0>").append(tieneDescuento ? "con-descuento" : "sin-descuento").append("</g:custom_label_0>\n");
+            xml.append("      <g:custom_label_1>").append(porcentajeDescuento).append("</g:custom_label_1>\n");
+            xml.append("      <g:custom_label_2>").append(tipoCategoria).append("</g:custom_label_2>\n");
             xml.append("    </item>\n");
         }
 
