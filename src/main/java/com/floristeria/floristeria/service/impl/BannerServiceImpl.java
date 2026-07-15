@@ -21,7 +21,6 @@ import java.util.List;
 @Transactional
 public class BannerServiceImpl implements BannerService {
 
-    private static final int MAX_BANNERS_POR_COMBO = 5;
     private final BannerRepository bannerRepository;
 
     @Override
@@ -63,7 +62,6 @@ public class BannerServiceImpl implements BannerService {
     public BannerResponseDTO crear(BannerRequestDTO request) {
         validarUbicacion(request.getUbicacion());
         validarReglaSelectorSedeGlobal(request.getUbicacion(), request.getSedeId());
-        validarLimiteBanners(request.getUbicacion(), request.getSedeId());
 
         Banner banner = new Banner();
         aplicarRequest(banner, request);
@@ -80,14 +78,6 @@ public class BannerServiceImpl implements BannerService {
 
         Banner banner = bannerRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new EntityNotFoundException("Banner no encontrado con id: " + id));
-
-        // Si cambia ubicacion o sede, validar limite
-        boolean cambiaCombo = !banner.getUbicacion().equals(request.getUbicacion())
-                || (banner.getSedeId() == null && request.getSedeId() != null)
-                || (banner.getSedeId() != null && !banner.getSedeId().equals(request.getSedeId()));
-        if (cambiaCombo) {
-            validarLimiteBanners(request.getUbicacion(), request.getSedeId());
-        }
 
         aplicarRequest(banner, request);
         Banner guardado = bannerRepository.save(banner);
@@ -118,22 +108,6 @@ public class BannerServiceImpl implements BannerService {
     private void validarReglaSelectorSedeGlobal(String ubicacion, Integer sedeId) {
         if (UbicacionBanner.SELECTOR_SEDE.name().equals(ubicacion) && sedeId != null) {
             throw new IllegalArgumentException("Los banners de SELECTOR_SEDE deben ser globales (sin sede asignada)");
-        }
-    }
-
-    private void validarLimiteBanners(String ubicacion, Integer sedeId) {
-        long count;
-        if (sedeId != null) {
-            count = bannerRepository.countActivosByUbicacionAndSede(ubicacion, sedeId);
-        } else {
-            count = bannerRepository.countActivosByUbicacionAndSede(ubicacion, -1);
-        }
-
-        if (count >= MAX_BANNERS_POR_COMBO) {
-            throw new IllegalStateException(
-                    "No se pueden tener mas de " + MAX_BANNERS_POR_COMBO
-                    + " banners activos para la combinacion ubicacion=" + ubicacion
-                    + (sedeId != null ? ", sedeId=" + sedeId : ", global"));
         }
     }
 
