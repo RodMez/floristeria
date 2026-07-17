@@ -40,7 +40,10 @@ public class ConfiguracionAdminController {
                 request.getIconUrl(),
                 request.getHistoria(),
                 request.getMision(),
-                request.getVision()
+                request.getVision(),
+                request.getShowcaseBadge(),
+                request.getShowcaseTitulo(),
+                request.getShowcaseSubtitulo()
         );
         return ResponseEntity.ok(mapToResponse(config));
     }
@@ -64,6 +67,9 @@ public class ConfiguracionAdminController {
                 .historia(config.getHistoria())
                 .mision(config.getMision())
                 .vision(config.getVision())
+                .showcaseBadge(config.getShowcaseBadge())
+                .showcaseTitulo(config.getShowcaseTitulo())
+                .showcaseSubtitulo(config.getShowcaseSubtitulo())
                 .build();
     }
 }

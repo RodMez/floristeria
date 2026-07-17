@@ -9,5 +9,6 @@ public interface ConfiguracionTiendaService {
     ConfiguracionTienda actualizarConfiguracion(String correo, Boolean enviar, String whatsapp,
             String instagram, String facebook, String tiktok, String heroUrl, String bannerUrl,
             String nombreSitio, String tagline, String descripcion, String logoUrl, String iconUrl,
-            String historia, String mision, String vision);
+            String historia, String mision, String vision,
+            String showcaseBadge, String showcaseTitulo, String showcaseSubtitulo);
 }
