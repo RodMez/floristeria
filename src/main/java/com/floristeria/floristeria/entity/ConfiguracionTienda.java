@@ -64,4 +64,13 @@ public class ConfiguracionTienda {
 
     @Column(name = "vision", columnDefinition = "TEXT")
     private String vision;
+
+    @Column(name = "showcase_badge")
+    private String showcaseBadge;
+
+    @Column(name = "showcase_titulo")
+    private String showcaseTitulo;
+
+    @Column(name = "showcase_subtitulo", length = 500)
+    private String showcaseSubtitulo;
 }

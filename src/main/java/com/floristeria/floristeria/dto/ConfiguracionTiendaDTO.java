@@ -58,6 +58,15 @@ public class ConfiguracionTiendaDTO {
 
         @Size(max = 10000, message = "La visión no puede superar los 10000 caracteres")
         private String vision;
+
+        @Size(max = 100, message = "El badge del showcase no puede superar los 100 caracteres")
+        private String showcaseBadge;
+
+        @Size(max = 200, message = "El título del showcase no puede superar los 200 caracteres")
+        private String showcaseTitulo;
+
+        @Size(max = 500, message = "El subtítulo del showcase no puede superar los 500 caracteres")
+        private String showcaseSubtitulo;
     }
 
     @Data
@@ -82,6 +91,9 @@ public class ConfiguracionTiendaDTO {
         private String historia;
         private String mision;
         private String vision;
+        private String showcaseBadge;
+        private String showcaseTitulo;
+        private String showcaseSubtitulo;
     }
 
     @Data
@@ -102,5 +114,8 @@ public class ConfiguracionTiendaDTO {
         private String historia;
         private String mision;
         private String vision;
+        private String showcaseBadge;
+        private String showcaseTitulo;
+        private String showcaseSubtitulo;
     }
 }
