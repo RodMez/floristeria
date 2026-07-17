@@ -101,7 +101,7 @@ public class BannerServiceImpl implements BannerService {
             UbicacionBanner.valueOf(ubicacion);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Ubicacion invalida: " + ubicacion
-                    + ". Valores permitidos: SELECTOR_SEDE, HOME_SEDE, PRODUCTO_INDIVIDUAL");
+                    + ". Valores permitidos: SELECTOR_SEDE, HOME_SEDE, SHOWCASE");
         }
     }
 

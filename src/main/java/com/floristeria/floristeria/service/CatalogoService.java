@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.floristeria.floristeria.dto.ProductoCatalogoDTO;
 import com.floristeria.floristeria.dto.ProductoCatalogoDetalleDTO;
+import com.floristeria.floristeria.dto.ProductoShowcaseDTO;
 import com.floristeria.floristeria.entity.Categoria;
 import com.floristeria.floristeria.entity.Categoria.CategoriaTipo;
 import com.floristeria.floristeria.entity.Inventario;
@@ -95,6 +96,55 @@ public class CatalogoService {
                 .ratingCount(reseñaRepository.findCountByProductoId(prodId))
                 .productosComplementarios(complementos)
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductoShowcaseDTO> obtenerShowcaseTodasLasSedes() {
+        List<Inventario> inventarios = inventarioRepository.findAvailableForFeed();
+
+        return inventarios.stream()
+                .collect(Collectors.groupingBy(inv -> inv.getProducto().getId()))
+                .entrySet().stream()
+                .map(entry -> {
+                    Producto p = entry.getValue().get(0).getProducto();
+                    Integer prodId = p.getId();
+
+                    List<String> categoriasNombres = p.getCategorias() != null
+                            ? p.getCategorias().stream().map(Categoria::getNombre).toList()
+                            : Collections.emptyList();
+
+                    List<ProductoShowcaseDTO.VarianteDTO> variantes = entry.getValue().stream()
+                            .map(inv -> {
+                                BigDecimal precioFinal = calcularPrecioConDescuento(inv.getPrecio(), inv.getDescuentoPorcentaje());
+                                return ProductoShowcaseDTO.VarianteDTO.builder()
+                                        .sedeId(inv.getSede().getId())
+                                        .sedeNombre(inv.getSede().getNombre())
+                                        .ciudad(inv.getSede().getCiudad())
+                                        .precio(inv.getPrecio())
+                                        .descuentoPorcentaje(inv.getDescuentoPorcentaje())
+                                        .precioFinal(precioFinal)
+                                        .stock(inv.getStock())
+                                        .build();
+                            })
+                            .toList();
+
+                    return ProductoShowcaseDTO.builder()
+                            .productoId(prodId)
+                            .nombre(p.getNombre())
+                            .descripcion(p.getDescripcion())
+                            .imagenUrl(p.getImagenUrl())
+                            .sku(p.getSku())
+                            .categoriasNombres(categoriasNombres)
+                            .ratingAverage(reseñaRepository.findAverageRatingByProductoId(prodId))
+                            .ratingCount(reseñaRepository.findCountByProductoId(prodId))
+                            .variantes(variantes)
+                            .build();
+                })
+                .sorted(Comparator.comparingInt((ProductoShowcaseDTO p) ->
+                        p.getVariantes().stream()
+                                .mapToInt(v -> v.getDescuentoPorcentaje() != null ? -v.getDescuentoPorcentaje() : 0)
+                                .min().orElse(0)))
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)

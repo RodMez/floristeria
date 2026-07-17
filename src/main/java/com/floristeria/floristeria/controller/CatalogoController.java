@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.floristeria.floristeria.dto.ProductoCatalogoDTO;
 import com.floristeria.floristeria.dto.ProductoCatalogoDetalleDTO;
+import com.floristeria.floristeria.dto.ProductoShowcaseDTO;
 import com.floristeria.floristeria.service.CatalogoService;
 
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,12 @@ public class CatalogoController {
             @PathVariable Integer sedeId) {
         List<ProductoCatalogoDTO> complementos = catalogoService.obtenerComplementosPorSede(sedeId);
         return ResponseEntity.ok(complementos);
+    }
+
+    @GetMapping("/todas-las-sedes")
+    public ResponseEntity<List<ProductoShowcaseDTO>> obtenerShowcaseTodasLasSedes() {
+        List<ProductoShowcaseDTO> showcase = catalogoService.obtenerShowcaseTodasLasSedes();
+        return ResponseEntity.ok(showcase);
     }
 
     @GetMapping(value = "/meta-feed", produces = MediaType.APPLICATION_XML_VALUE)
