@@ -463,6 +463,7 @@ public class PedidoServiceImpl implements PedidoService {
     private PedidoHistorialDTO mapToHistorialDTO(Pedido pedido) {
         Sede sede = pedido.getSede();
         Direccion direccion = pedido.getDireccion();
+        Cliente cliente = pedido.getCliente();
 
         PedidoHistorialDTO.DireccionHistorialDTO direccionEntrega = direccion != null
                 ? PedidoHistorialDTO.DireccionHistorialDTO.builder()
@@ -506,6 +507,9 @@ public class PedidoServiceImpl implements PedidoService {
                 .direccionEntrega(direccionEntrega)
                 .detalles(detalles)
                 .costoEnvio(pedido.getCostoEnvio() != null ? pedido.getCostoEnvio() : BigDecimal.ZERO)
+                .clienteNombre(cliente != null ? cliente.getNombre() : "Cliente eliminado")
+                .clienteEmail(cliente != null ? cliente.getEmail() : "N/A")
+                .clienteTelefono(cliente != null ? cliente.getTelefono() : "N/A")
                 .zonaDomicilioNombre(
                     direccion != null && direccion.getZonaDomicilio() != null
                         ? direccion.getZonaDomicilio().getLocalidad()

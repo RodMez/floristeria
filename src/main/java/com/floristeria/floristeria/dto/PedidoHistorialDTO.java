@@ -24,6 +24,9 @@ public class PedidoHistorialDTO {
     private List<DetalleHistorialDTO> detalles;
     private BigDecimal costoEnvio;
     private String zonaDomicilioNombre;
+    private String clienteNombre;
+    private String clienteEmail;
+    private String clienteTelefono;
 
     @Getter
     @Setter
