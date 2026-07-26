@@ -38,6 +38,7 @@ public class ZonaDomicilio {
     private BigDecimal precio;
 
     @Column(name = "excluido", nullable = false)
+    @Builder.Default
     private Boolean excluido = false;
 
     @Column(name = "deleted_at")
