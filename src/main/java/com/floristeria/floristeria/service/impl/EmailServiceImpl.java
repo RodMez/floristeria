@@ -20,7 +20,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -137,14 +136,6 @@ public class EmailServiceImpl implements EmailService {
         return "font-family:'Cinzel',Georgia,'Times New Roman',serif;"
                 + "background-color:" + C_BG + ";"
                 + "margin:0;padding:0;-webkit-text-size-adjust:none;";
-    }
-
-    private String textPrimary() {
-        return "color:" + C_TEXT + ";font-family:'Cinzel',Georgia,'Times New Roman',serif;";
-    }
-
-    private String textSecondary() {
-        return "color:" + C_TEXT_SEC + ";font-family:'Cinzel',Georgia,'Times New Roman',serif;font-size:13px;";
     }
 
     private String cardStyle() {
@@ -343,10 +334,6 @@ public class EmailServiceImpl implements EmailService {
         if (value == null) return "0";
         long rounded = value.setScale(0, RoundingMode.HALF_UP).longValue();
         return java.lang.String.format(java.util.Locale.US, "%,d", rounded);
-    }
-
-    private String formatCurrency(double value) {
-        return formatCurrency(BigDecimal.valueOf(value));
     }
 
     // ═══════════════════════════════════════════════════════════════

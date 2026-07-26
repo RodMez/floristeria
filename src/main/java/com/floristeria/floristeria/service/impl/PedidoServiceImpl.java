@@ -40,7 +40,6 @@ public class PedidoServiceImpl implements PedidoService {
     private final ClienteRepository clienteRepository;
     private final DireccionRepository direccionRepository;
     private final InventarioRepository inventarioRepository;
-    private final ZonaDomicilioRepository zonaDomicilioRepository;
     private final EmailService emailService;
 
     @Value("${wompi.public-key}")

@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
-import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xddf.usermodel.chart.AxisPosition;
@@ -48,8 +47,6 @@ import org.openxmlformats.schemas.drawingml.x2006.chart.CTPieSer;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTPlotArea;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTValAx;
 import org.openxmlformats.schemas.drawingml.x2006.chart.STCrossBetween;
-import org.openxmlformats.schemas.drawingml.x2006.main.CTSRgbColor;
-import org.openxmlformats.schemas.drawingml.x2006.main.CTSolidColorFillProperties;
 import org.springframework.stereotype.Service;
 
 import com.floristeria.floristeria.dto.ProductoInventarioExcelDTO;

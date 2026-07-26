@@ -251,10 +251,6 @@ public class CatalogoService {
     public List<ProductoCatalogoDTO> obtenerComplementosPorSede(Integer sedeId) {
         List<ProductoComplementario> curados = complementarioRepository.findBySede(sedeId);
 
-        Set<Integer> idsCurados = curados.stream()
-                .map(pc -> pc.getComplementario().getId())
-                .collect(Collectors.toSet());
-
         Set<Integer> todosLosComplementarios = complementarioRepository.findAllComplementarioIds();
 
         List<ProductoCatalogoDTO> complementos = curados.stream()

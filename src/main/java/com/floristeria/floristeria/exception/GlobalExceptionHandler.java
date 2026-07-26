@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import jakarta.persistence.EntityNotFoundException;
-import com.floristeria.floristeria.exception.ZonaExcluidaException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
