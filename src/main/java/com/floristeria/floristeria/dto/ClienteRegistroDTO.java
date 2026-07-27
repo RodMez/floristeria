@@ -1,7 +1,9 @@
 package com.floristeria.floristeria.dto;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,4 +33,8 @@ public class ClienteRegistroDTO {
 
     @Size(max = 20, message = "El teléfono no puede exceder 20 caracteres")
     private String telefono;
+
+    @NotNull(message = "Debes confirmar la aceptación de la política de datos")
+    @AssertTrue(message = "Debes aceptar la política de tratamiento de datos personales")
+    private Boolean aceptaHabeasData;
 }

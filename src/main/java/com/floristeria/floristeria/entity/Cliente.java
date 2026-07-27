@@ -38,6 +38,21 @@ public class Cliente {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "fecha_consentimiento_habeas")
+    private LocalDateTime fechaConsentimientoHabeas;
+
+    @Column(name = "version_politica_habeas")
+    @Builder.Default
+    private String versionPoliticaHabeas = "v1";
+
+    @Column(name = "fecha_solicitud_supresion")
+    private LocalDateTime fechaSolicitudSupresion;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado_supresion")
+    @Builder.Default
+    private EstadoSupresion estadoSupresion = EstadoSupresion.NINGUNA;
+
     @PrePersist
     @PreUpdate
     protected void onCreate() {

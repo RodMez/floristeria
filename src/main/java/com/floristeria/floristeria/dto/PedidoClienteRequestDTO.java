@@ -1,5 +1,6 @@
 package com.floristeria.floristeria.dto;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -27,4 +28,8 @@ public class PedidoClienteRequestDTO {
     private List<DetallePedidoClienteDTO> detalles;
 
     private String notasEntrega;
+
+    @NotNull(message = "Debes confirmar la aceptación de los términos y condiciones")
+    @AssertTrue(message = "Debes aceptar los términos y condiciones")
+    private Boolean aceptaTerminos;
 }
