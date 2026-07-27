@@ -43,7 +43,12 @@ public class ConfiguracionAdminController {
                 request.getVision(),
                 request.getShowcaseBadge(),
                 request.getShowcaseTitulo(),
-                request.getShowcaseSubtitulo()
+                request.getShowcaseSubtitulo(),
+                request.getNit(),
+                request.getRazonSocial(),
+                request.getRepresentanteLegal(),
+                request.getDomicilioComercial(),
+                request.getCorreoHabeasData()
         );
         return ResponseEntity.ok(mapToResponse(config));
     }
@@ -70,6 +75,13 @@ public class ConfiguracionAdminController {
                 .showcaseBadge(config.getShowcaseBadge())
                 .showcaseTitulo(config.getShowcaseTitulo())
                 .showcaseSubtitulo(config.getShowcaseSubtitulo())
+                .nit(config.getNit())
+                .razonSocial(config.getRazonSocial())
+                .representanteLegal(config.getRepresentanteLegal())
+                .domicilioComercial(config.getDomicilioComercial())
+                .correoHabeasData(config.getCorreoHabeasData())
+                .politicaVersionActual(config.getPoliticaVersionActual())
+                .tycVersionActual(config.getTycVersionActual())
                 .build();
     }
 }

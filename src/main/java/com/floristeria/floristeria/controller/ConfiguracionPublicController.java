@@ -36,6 +36,9 @@ public class ConfiguracionPublicController {
                 .showcaseBadge(config.getShowcaseBadge())
                 .showcaseTitulo(config.getShowcaseTitulo())
                 .showcaseSubtitulo(config.getShowcaseSubtitulo())
+                .correoHabeasData(config.getCorreoHabeasData())
+                .politicaVersionActual(config.getPoliticaVersionActual())
+                .tycVersionActual(config.getTycVersionActual())
                 .build());
     }
 }

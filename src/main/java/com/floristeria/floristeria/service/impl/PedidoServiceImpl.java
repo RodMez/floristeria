@@ -30,6 +30,7 @@ import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -138,6 +139,10 @@ public class PedidoServiceImpl implements PedidoService {
     @Transactional
     @Override
     public PedidoClienteResponseDTO crearPedidoCliente(PedidoClienteRequestDTO request, Integer clienteId) {
+        if (!Boolean.TRUE.equals(request.getAceptaTerminos())) {
+            throw new IllegalArgumentException("Debes aceptar los términos y condiciones para confirmar el pedido");
+        }
+
         // Validar que la sede existe
         Sede sede = sedeRepository.findById(request.getSedeId())
                 .orElseThrow(() -> new EntityNotFoundException("Sede no encontrada"));
@@ -188,6 +193,9 @@ public class PedidoServiceImpl implements PedidoService {
                 .costoEnvio(zonaDomicilio.getPrecio())
                 .notasEntrega(request.getNotasEntrega())
                 .total(BigDecimal.ZERO) // Temporal, se actualiza después
+                .aceptaTerminos(true)
+                .fechaAceptacionTyc(LocalDateTime.now())
+                .versionTyc("v1")
                 .build();
 
         Pedido savedPedido = pedidoRepository.save(pedido);

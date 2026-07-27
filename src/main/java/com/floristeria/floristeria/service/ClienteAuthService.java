@@ -6,6 +6,7 @@ import com.floristeria.floristeria.dto.ClienteLoginDTO;
 import com.floristeria.floristeria.dto.ClientePasswordRequestDTO;
 import com.floristeria.floristeria.dto.ClientePerfilResponseDTO;
 import com.floristeria.floristeria.dto.ClienteRegistroDTO;
+import com.floristeria.floristeria.dto.SupresionRequestDTO;
 
 public interface ClienteAuthService {
 
@@ -18,4 +19,6 @@ public interface ClienteAuthService {
     ClientePerfilResponseDTO actualizarPerfil(Integer clienteId, ClienteActualizarRequestDTO request);
 
     void cambiarPassword(Integer clienteId, ClientePasswordRequestDTO request);
+
+    String solicitarSupresion(Integer clienteId, SupresionRequestDTO request);
 }
