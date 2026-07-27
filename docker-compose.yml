@@ -2,6 +2,8 @@ services:
   postgres-floristeria:
     image: postgres:16
     container_name: db_floristeria_prod
+    # Tuning manual PostgreSQL — RE-VALIDAR con k6 antes del lanzamiento real.
+    command: ["postgres", "-c", "shared_buffers=1GB", "-c", "work_mem=16MB", "-c", "max_connections=60"]
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
@@ -20,6 +22,11 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 3000M
+          cpus: "2.5"
     networks:
       - floristeria-network
 
@@ -36,16 +43,36 @@ services:
       DB_URL: jdbc:postgresql://postgres-floristeria:5432/${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASS}
+      DB_NAME: ${DB_NAME}
       JWT_SECRET: ${JWT_SECRET}
       IMAGEKIT_PRIVATE_KEY: ${IMAGEKIT_PRIVATE_KEY}
       IMAGEKIT_PUBLIC_KEY: ${IMAGEKIT_PUBLIC_KEY}
       IMAGEKIT_URL_ENDPOINT: ${IMAGEKIT_URL_ENDPOINT}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      FRONTEND_URL: ${FRONTEND_URL}
+      WOMPI_PUBLIC_KEY: ${WOMPI_PUBLIC_KEY}
+      WOMPI_INTEGRITY_SECRET: ${WOMPI_INTEGRITY_SECRET}
+      WOMPI_EVENTS_SECRET: ${WOMPI_EVENTS_SECRET}
+      BREVO_API_KEY: ${BREVO_API_KEY}
+      BREVO_SENDER_EMAIL: ${BREVO_SENDER_EMAIL}
+      BREVO_SENDER_NAME: ${BREVO_SENDER_NAME}
     # ELIMINADO: ports. Coolify/Traefik enrutará el tráfico al puerto 8080 internamente.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
     logging: # AÑADIDO: Control de logs (Punto 4)
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 2500M
+          cpus: "2.0"
     networks:
       - floristeria-network
 

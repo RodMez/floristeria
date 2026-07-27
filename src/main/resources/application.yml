@@ -10,6 +10,16 @@ spring:
     username: ${DB_USER}
     password: ${DB_PASS}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      # VPS 6vCPU/12GB. PG max_connections=60. Pool=25 deja margen para
+      # conexiones internas PG (autovacuum, checkpointer) y psql manual.
+      # Re-validar con k6 antes de lanzamiento real.
+      maximum-pool-size: 25
+      minimum-idle: 5
+      connection-timeout: 20000   # 20s
+      idle-timeout: 300000        # 5 min
+      max-lifetime: 1200000       # 20 min
+      pool-name: FloristeriaHikariPool
   sql:
     init:
       mode: always
@@ -23,6 +33,15 @@ spring:
 
 server:
   port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
 
 jwt:
   secret: ${JWT_SECRET}

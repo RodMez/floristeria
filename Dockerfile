@@ -13,7 +13,14 @@ RUN mvn clean package -DskipTests
 # Runtime
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+
+# curl para el healthcheck del contenedor (ver docker-compose.yml)
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
+# Usuario no-root: el contenedor corre la JVM como spring:spring
+RUN addgroup --system spring && adduser --system --ingroup spring spring
+COPY --from=build --chown=spring:spring /app/target/*.jar app.jar
+USER spring:spring
 
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
