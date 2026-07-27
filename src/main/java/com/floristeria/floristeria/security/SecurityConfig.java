@@ -32,6 +32,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final LoginRateLimitFilter loginRateLimitFilter;
+    private final WebhookRateLimitFilter webhookRateLimitFilter;
     private final CustomUserDetailsService customUserDetailsService;
 
     @Value("${app.cors.allowed-origins}")
@@ -66,6 +67,7 @@ public class SecurityConfig {
                         // 5. Cualquier otra ruta requiere autenticación
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(webhookRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(loginRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
