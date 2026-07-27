@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -18,6 +19,9 @@ import jakarta.persistence.EntityNotFoundException;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @Value("${app.debug-errors:false}")
+    private boolean debugErrors;
 
     @ExceptionHandler(AccesoDenegadoSedeException.class)
     public ResponseEntity<Map<String, Object>> handleAccesoDenegadoSedeException(AccesoDenegadoSedeException ex) {
@@ -99,10 +103,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
         log.error("Error interno", ex);
+        String mensaje = debugErrors
+                ? "Error interno del servidor: " + (ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName())
+                : "Error interno del servidor";
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of(
                         "status", 500,
                         "error", "Internal Server Error",
-                        "mensaje", "Error interno del servidor: " + (ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName())));
+                        "mensaje", mensaje));
     }
 }

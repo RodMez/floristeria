@@ -20,6 +20,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.http.HttpMethod;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -29,6 +31,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final LoginRateLimitFilter loginRateLimitFilter;
     private final CustomUserDetailsService customUserDetailsService;
 
     @Value("${app.cors.allowed-origins}")
@@ -46,15 +49,24 @@ public class SecurityConfig {
                         // Endpoints públicos de catálogo
                         .requestMatchers("/api/v1/catalogo/**", "/api/v1/sedes/**", "/api/v1/categorias/**", "/api/v1/zonas-domicilio/**", "/api/v1/configuracion", "/api/v1/banners/**", "/api/v1/resenas/producto/**").permitAll()
                         .requestMatchers("/api/v1/webhooks/**").permitAll()
-                        // 2. Rutas de Clientes (requieren rol CLIENTE autenticado)
+                        // 2. Creación de pedidos manuales: solo ADMIN/SUPERADMIN (precios se validan contra inventario server-side)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/pedidos").hasAnyAuthority("ADMIN", "SUPERADMIN")
+                        // 3. Rutas de Clientes (requieren rol CLIENTE autenticado)
                         .requestMatchers("/api/v1/clientes/**").hasAuthority("CLIENTE")
-                        // 3. Rutas exclusivas del Superadmin
+                        // 4. Reseñas: crear y consultar estado solo CLIENTE (lectura pública ya cubierta arriba)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/resenas").hasAuthority("CLIENTE")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/resenas/producto/*/estado").hasAuthority("CLIENTE")
+                        // 5. Rutas exclusivas del Superadmin
                         .requestMatchers("/api/superadmin/**").hasAuthority("SUPERADMIN")
-                        // 4. Rutas de los Administradores de Sede
+                        // 6. Banners y Reseñas admin: solo SUPERADMIN (recursos globales, no por sede)
+                        .requestMatchers("/api/admin/banners/**").hasAuthority("SUPERADMIN")
+                        .requestMatchers("/api/admin/resenas/**").hasAuthority("SUPERADMIN")
+                        // 7. Rutas de los Administradores de Sede
                         .requestMatchers("/api/admin/**").hasAnyAuthority("ADMIN", "SUPERADMIN")
                         // 5. Cualquier otra ruta requiere autenticación
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(loginRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -85,7 +97,8 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(allowedOrigins);
         
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowedHeaders(Arrays.asList(
+            "Authorization", "Content-Type", "X-Requested-With", "Accept"));
         configuration.setAllowCredentials(true);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

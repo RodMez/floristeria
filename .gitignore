@@ -1,5 +1,6 @@
 .env
 .env.local
+.env.example
 docker-compose.override.yml
 
 HELP.md
@@ -40,6 +41,4 @@ build/
 FloristeriaDB.dbml
 /src/main/resources/application.yml
 /src/main/resources/application-local.yml
-.gitignore
-
 /docs/auditoria

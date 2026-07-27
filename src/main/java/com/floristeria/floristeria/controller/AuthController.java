@@ -5,6 +5,7 @@ import com.floristeria.floristeria.dto.LoginRequestDTO;
 import com.floristeria.floristeria.entity.UsuarioAdmin;
 import com.floristeria.floristeria.repository.UsuarioAdminRepository;
 import com.floristeria.floristeria.security.JwtService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,7 +25,7 @@ public class AuthController {
     private final JwtService jwtService;
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDTO> login(@RequestBody LoginRequestDTO request) {
+    public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody LoginRequestDTO request) {
         String email = request.getEmail().toLowerCase().trim();
 
         authenticationManager.authenticate(

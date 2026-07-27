@@ -63,9 +63,8 @@ public class PedidoServiceImpl implements PedidoService {
         Direccion direccion = direccionRepository.findById(request.getDireccionId())
                 .orElseThrow(() -> new EntityNotFoundException("Dirección no encontrada"));
 
-        BigDecimal total = request.getDetalles().stream()
-                .map(detalle -> detalle.getPrecioUnitario().multiply(BigDecimal.valueOf(detalle.getCantidad())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal total = BigDecimal.ZERO;
+        List<DetallePedido> detallesPedidos = new ArrayList<>();
 
         Pedido pedido = Pedido.builder()
                 .sede(sede)
@@ -73,25 +72,57 @@ public class PedidoServiceImpl implements PedidoService {
                 .cliente(cliente)
                 .direccion(direccion)
                 .notasEntrega(request.getNotasEntrega())
-                .total(total)
+                .total(BigDecimal.ZERO)
                 .build();
 
         Pedido savedPedido = pedidoRepository.save(pedido);
 
         for (DetallePedidoRequestDTO detalleRequest : request.getDetalles()) {
-            Producto producto = productoRepository.findById(detalleRequest.getProductoId())
-                    .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado"));
+            Inventario inventario = inventarioRepository.findByProducto_IdAndSede_Id(
+                    detalleRequest.getProductoId(), request.getSedeId());
+
+            if (inventario == null) {
+                throw new EntityNotFoundException(
+                        "Producto no disponible en la sede seleccionada (producto ID: " + detalleRequest.getProductoId() + ")");
+            }
+
+            if (!inventario.getDisponible() || inventario.getStock() < detalleRequest.getCantidad()) {
+                throw new IllegalStateException(
+                        "Stock insuficiente para el producto ID: " + detalleRequest.getProductoId());
+            }
+
+            Producto producto = inventario.getProducto();
+
+            BigDecimal precioBase = inventario.getPrecio();
+            Integer descuento = inventario.getDescuentoPorcentaje();
+            BigDecimal precioFinal;
+
+            if (descuento != null && descuento > 0) {
+                BigDecimal descuentoAmount = precioBase.multiply(new BigDecimal(descuento))
+                        .divide(new BigDecimal(100), 2, RoundingMode.HALF_UP);
+                precioFinal = precioBase.subtract(descuentoAmount);
+            } else {
+                precioFinal = precioBase;
+            }
+
+            BigDecimal subtotal = precioFinal.multiply(BigDecimal.valueOf(detalleRequest.getCantidad()));
+            total = total.add(subtotal);
 
             DetallePedido detallePedido = DetallePedido.builder()
                     .pedido(savedPedido)
                     .producto(producto)
                     .cantidad(detalleRequest.getCantidad())
-                    .precioUnitario(detalleRequest.getPrecioUnitario())
+                    .precioUnitario(precioFinal)
                     .notaPersonalizacion(detalleRequest.getNotaPersonalizacion())
                     .build();
 
             detallePedidoRepository.save(detallePedido);
+            detallesPedidos.add(detallePedido);
         }
+
+        savedPedido.setTotal(total);
+        savedPedido.setDetalles(detallesPedidos);
+        pedidoRepository.save(savedPedido);
 
         return savedPedido.getId();
     }
