@@ -9,10 +9,12 @@ import com.floristeria.floristeria.dto.PedidoHistorialDTO;
 import com.floristeria.floristeria.dto.PedidoRequestDTO;
 import com.floristeria.floristeria.entity.*;
 import com.floristeria.floristeria.repository.*;
+import com.floristeria.floristeria.service.ConfiguracionTiendaService;
 import com.floristeria.floristeria.service.EmailService;
 import com.floristeria.floristeria.service.PedidoService;
 import com.floristeria.floristeria.exception.ZonaExcluidaException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,8 +22,12 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.access.AccessDeniedException;
 
+import org.hibernate.Hibernate;
+import org.springframework.transaction.annotation.Propagation;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -29,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PedidoServiceImpl implements PedidoService {
@@ -41,6 +48,7 @@ public class PedidoServiceImpl implements PedidoService {
     private final DireccionRepository direccionRepository;
     private final InventarioRepository inventarioRepository;
     private final EmailService emailService;
+    private final ConfiguracionTiendaService configuracionService;
 
     @Value("${wompi.public-key}")
     private String wompiPublicKey;
@@ -447,7 +455,7 @@ public class PedidoServiceImpl implements PedidoService {
         String cadenaFirma = transactionId + status + amountInCents + timestampSecs + wompiEventsSecret;
         String firmaCalculada = generarSha256Hex(cadenaFirma);
 
-        if (!firmaCalculada.equals(checksum)) {
+        if (!MessageDigest.isEqual(firmaCalculada.getBytes(StandardCharsets.UTF_8), checksum.getBytes(StandardCharsets.UTF_8))) {
             throw new SecurityException("Firma del webhook inválida");
         }
 
@@ -462,6 +470,13 @@ public class PedidoServiceImpl implements PedidoService {
             return;
         }
 
+        long montoEsperadoCentavos = pedido.getTotal().multiply(BigDecimal.valueOf(100)).longValue();
+        if (!String.valueOf(montoEsperadoCentavos).equals(amountInCents)) {
+            log.error("Webhook Wompi - monto mismatch: esperado={} recibido={} pedido={}",
+                    montoEsperadoCentavos, amountInCents, pedido.getCodigo());
+            return;
+        }
+
         if (pedido.getEstado() == EstadoPedido.PAGADO) {
             return;
         }
@@ -470,14 +485,64 @@ public class PedidoServiceImpl implements PedidoService {
             return;
         }
 
+        marcarPedidoPagado(pedido, transactionId, paymentMethodType);
+
+        try {
+            deducirInventario(pedido);
+        } catch (IllegalStateException e) {
+            log.error("Webhook Wompi - stock insuficiente post-pago para pedido {}: {}",
+                    pedido.getCodigo(), e.getMessage());
+            notificarAlertaStockInsuficiente(pedido, e.getMessage());
+        }
+
+        emailService.notificarNuevaVenta(pedido);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    private void marcarPedidoPagado(Pedido pedido, String transactionId, String paymentMethodType) {
+        Hibernate.initialize(pedido.getDetalles());
         pedido.setEstado(EstadoPedido.PAGADO);
         pedido.setTransaccionId(transactionId);
         pedido.setMetodoPago(paymentMethodType);
         pedidoRepository.save(pedido);
+    }
 
-        deducirInventario(pedido);
+    private void notificarAlertaStockInsuficiente(Pedido pedido, String detalleError) {
+        try {
+            ConfiguracionTienda config = configuracionService.obtenerConfiguracion();
+            if (Boolean.TRUE.equals(config.getEnviarCopiaMaestro())
+                    && config.getCorreoMaestro() != null
+                    && !config.getCorreoMaestro().isBlank()) {
 
-        emailService.notificarNuevaVenta(pedido);
+                String nombreSede = pedido.getSede() != null ? pedido.getSede().getNombre() : "N/A";
+                String asunto = "\u26A0\uFE0F STOCK INSUFICIENTE POST-PAGO - Pedido " + pedido.getCodigo();
+                String html = construirHtmlAlertaStock(pedido, nombreSede, detalleError);
+
+                emailService.enviarCorreoDirecto(config.getCorreoMaestro(), "Administrador", asunto, html);
+            }
+        } catch (Exception e) {
+            log.error("No se pudo enviar alerta de stock insuficiente para pedido {}: {}",
+                    pedido.getCodigo(), e.getMessage());
+        }
+    }
+
+    private String construirHtmlAlertaStock(Pedido pedido, String nombreSede, String detalleError) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#FAFAF9;'>");
+        sb.append("<div style='background:#DC2626;color:#fff;padding:20px;text-align:center;'>");
+        sb.append("<h1 style='margin:0;font-size:20px;'>\u26A0\uFE0F ALERTA: Stock Insuficiente Post-Pago</h1></div>");
+        sb.append("<div style='padding:24px;background:#fff;border:1px solid #E7E5E4;'>");
+        sb.append("<p style='color:#3D3D3D;font-size:15px;'>Se confirmó el pago del pedido pero no se pudo deducir el inventario:</p>");
+        sb.append("<table style='width:100%;border-collapse:collapse;font-size:14px;'>");
+        sb.append("<tr><td style='padding:8px 0;color:#78716C;font-weight:bold;'>Pedido:</td><td style='padding:8px 0;color:#3D3D3D;'>").append(pedido.getCodigo()).append("</td></tr>");
+        sb.append("<tr><td style='padding:8px 0;color:#78716C;font-weight:bold;'>Sede:</td><td style='padding:8px 0;color:#3D3D3D;'>").append(nombreSede).append("</td></tr>");
+        sb.append("<tr><td style='padding:8px 0;color:#78716C;font-weight:bold;'>Total cobrado:</td><td style='padding:8px 0;color:#3D3D3D;'>$").append(pedido.getTotal()).append(" COP</td></tr>");
+        sb.append("<tr><td style='padding:8px 0;color:#78716C;font-weight:bold;'>Cliente:</td><td style='padding:8px 0;color:#3D3D3D;'>").append(pedido.getCliente() != null ? pedido.getCliente().getNombre() : "N/A").append("</td></tr>");
+        sb.append("<tr><td style='padding:8px 0;color:#78716C;font-weight:bold;'>Error:</td><td style='padding:8px 0;color:#DC2626;'>").append(detalleError).append("</td></tr>");
+        sb.append("</table>");
+        sb.append("<p style='color:#78716C;font-size:13px;margin-top:20px;'>El pedido est\u00E1 marcado como PAGADO. Requiere intervenci\u00F3n manual para resolver el inventario.</p>");
+        sb.append("</div></div>");
+        return sb.toString();
     }
 
     @Override

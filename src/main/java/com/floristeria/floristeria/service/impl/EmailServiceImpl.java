@@ -120,6 +120,16 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
+    @Async
+    @Override
+    public void enviarCorreoDirecto(String toEmail, String toName, String subject, String htmlContent) {
+        try {
+            enviarCorreoBrevo(toEmail, toName, subject, htmlContent);
+        } catch (Exception e) {
+            log.error("Error al enviar correo directo a {}: {}", toEmail, e.getMessage());
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════════
     //  HELPER: Google Fonts link for Cinzel
     // ═══════════════════════════════════════════════════════════════
