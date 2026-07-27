@@ -1,10 +1,12 @@
 package com.floristeria.floristeria.service;
 
-import java.io.IOException;
-
 import org.springframework.web.multipart.MultipartFile;
+
+import com.floristeria.floristeria.exception.ImageKitException;
 
 public interface ImageKitService {
 
-    String subirImagen(MultipartFile archivo, String nombreArchivo) throws IOException;
+    String subirImagen(MultipartFile archivo, String nombreArchivo) throws ImageKitException;
+
+    void borrar(String url) throws ImageKitException;
 }

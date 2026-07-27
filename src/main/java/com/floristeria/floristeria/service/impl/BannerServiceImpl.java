@@ -4,8 +4,10 @@ import com.floristeria.floristeria.dto.BannerRequestDTO;
 import com.floristeria.floristeria.dto.BannerResponseDTO;
 import com.floristeria.floristeria.entity.Banner;
 import com.floristeria.floristeria.entity.UbicacionBanner;
+import com.floristeria.floristeria.exception.ImageKitException;
 import com.floristeria.floristeria.repository.BannerRepository;
 import com.floristeria.floristeria.service.BannerService;
+import com.floristeria.floristeria.service.ImageKitService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,7 @@ import java.util.List;
 public class BannerServiceImpl implements BannerService {
 
     private final BannerRepository bannerRepository;
+    private final ImageKitService imageKitService;
 
     @Override
     @Transactional(readOnly = true)
@@ -89,6 +92,18 @@ public class BannerServiceImpl implements BannerService {
     public void eliminar(Integer id) {
         Banner banner = bannerRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new EntityNotFoundException("Banner no encontrado con id: " + id));
+
+        String imagenUrl = banner.getImagenUrl();
+        if (imagenUrl != null && !imagenUrl.isBlank()) {
+            try {
+                imageKitService.borrar(imagenUrl);
+                log.info("Asset de ImageKit borrado: banner={}, url={}", id, imagenUrl);
+            } catch (ImageKitException e) {
+                log.warn("No se pudo borrar asset en ImageKit (se reintentara en job nocturno): banner={}, url={}, causa={}",
+                        id, imagenUrl, e.getMessage());
+            }
+        }
+
         banner.setDeletedAt(LocalDateTime.now());
         bannerRepository.save(banner);
         log.info("Banner eliminado (soft): id={}", id);

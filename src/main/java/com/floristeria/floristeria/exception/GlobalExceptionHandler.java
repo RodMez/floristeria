@@ -100,6 +100,27 @@ public class GlobalExceptionHandler {
                         "mensaje", mensaje));
     }
 
+    @ExceptionHandler(TipoArchivoNoSoportadoException.class)
+    public ResponseEntity<Map<String, Object>> handleTipoArchivoNoSoportado(TipoArchivoNoSoportadoException ex) {
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                .body(Map.of(
+                        "status", 415,
+                        "error", "Unsupported Media Type",
+                        "mensaje", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ImageKitException.class)
+    public ResponseEntity<Map<String, Object>> handleImageKit(ImageKitException ex) {
+        HttpStatus status = ex.getStatusCode() == 400
+                ? HttpStatus.BAD_REQUEST
+                : HttpStatus.SERVICE_UNAVAILABLE;
+        return ResponseEntity.status(status)
+                .body(Map.of(
+                        "status", status.value(),
+                        "error", status.getReasonPhrase(),
+                        "mensaje", ex.getMensajeUsuario()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
         log.error("Error interno", ex);

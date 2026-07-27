@@ -7,15 +7,18 @@ import com.floristeria.floristeria.entity.EstadoPedido;
 import com.floristeria.floristeria.entity.Inventario;
 import com.floristeria.floristeria.entity.Producto;
 import com.floristeria.floristeria.entity.Sede;
+import com.floristeria.floristeria.exception.ImageKitException;
 import com.floristeria.floristeria.repository.CategoriaRepository;
 import com.floristeria.floristeria.repository.DetallePedidoRepository;
 import com.floristeria.floristeria.repository.InventarioRepository;
 import com.floristeria.floristeria.repository.ProductoRepository;
 import com.floristeria.floristeria.repository.SedeRepository;
+import com.floristeria.floristeria.service.ImageKitService;
 import com.floristeria.floristeria.service.ProductoService;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,11 +33,13 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class ProductoServiceImpl implements ProductoService {
 
     private final ProductoRepository productoRepository;
     private final CategoriaRepository categoriaRepository;
     private final DetallePedidoRepository detallePedidoRepository;
+    private final ImageKitService imageKitService;
     
     // inyecciones para la lógica de Inventario Multi-sede
     private final SedeRepository sedeRepository;
@@ -152,6 +157,17 @@ public class ProductoServiceImpl implements ProductoService {
         if (estaDisponibleEnAlgunaSede) {
             throw new IllegalStateException(
                     "No se puede eliminar el producto porque está disponible en alguna sede. Desactívalo primero.");
+        }
+
+        String imagenUrl = producto.getImagenUrl();
+        if (imagenUrl != null && !imagenUrl.isBlank()) {
+            try {
+                imageKitService.borrar(imagenUrl);
+                log.info("Asset de ImageKit borrado: producto={}, url={}", id, imagenUrl);
+            } catch (ImageKitException e) {
+                log.warn("No se pudo borrar asset en ImageKit (se reintentara en job nocturno): producto={}, url={}, causa={}",
+                        id, imagenUrl, e.getMessage());
+            }
         }
                 
         producto.setDeletedAt(LocalDateTime.now());
