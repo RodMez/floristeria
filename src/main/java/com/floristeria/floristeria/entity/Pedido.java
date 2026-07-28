@@ -77,6 +77,16 @@ public class Pedido {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "acepta_terminos")
+    private Boolean aceptaTerminos;
+
+    @Column(name = "fecha_aceptacion_tyc")
+    private LocalDateTime fechaAceptacionTyc;
+
+    @Column(name = "version_tyc")
+    @Builder.Default
+    private String versionTyc = "v1";
+
     @PrePersist
     protected void onCreate() {
         if (this.codigo == null) {

@@ -73,4 +73,27 @@ public class ConfiguracionTienda {
 
     @Column(name = "showcase_subtitulo", length = 500)
     private String showcaseSubtitulo;
+
+    @Column(name = "nit")
+    private String nit;
+
+    @Column(name = "razon_social")
+    private String razonSocial;
+
+    @Column(name = "representante_legal")
+    private String representanteLegal;
+
+    @Column(name = "domicilio_comercial")
+    private String domicilioComercial;
+
+    @Column(name = "correo_habeas_data")
+    private String correoHabeasData;
+
+    @Column(name = "politica_version_actual")
+    @Builder.Default
+    private String politicaVersionActual = "v1";
+
+    @Column(name = "tyc_version_actual")
+    @Builder.Default
+    private String tycVersionActual = "v1";
 }

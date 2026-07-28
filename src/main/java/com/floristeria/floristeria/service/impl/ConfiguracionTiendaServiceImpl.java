@@ -33,7 +33,9 @@ public class ConfiguracionTiendaServiceImpl implements ConfiguracionTiendaServic
             String instagram, String facebook, String tiktok, String heroUrl, String bannerUrl,
             String nombreSitio, String tagline, String descripcion, String logoUrl, String iconUrl,
             String historia, String mision, String vision,
-            String showcaseBadge, String showcaseTitulo, String showcaseSubtitulo) {
+            String showcaseBadge, String showcaseTitulo, String showcaseSubtitulo,
+            String nit, String razonSocial, String representanteLegal, String domicilioComercial,
+            String correoHabeasData) {
         ConfiguracionTienda config = obtenerConfiguracion();
         config.setCorreoMaestro(correo);
         config.setEnviarCopiaMaestro(enviar != null ? enviar : false);
@@ -54,6 +56,11 @@ public class ConfiguracionTiendaServiceImpl implements ConfiguracionTiendaServic
         config.setShowcaseBadge(showcaseBadge);
         config.setShowcaseTitulo(showcaseTitulo);
         config.setShowcaseSubtitulo(showcaseSubtitulo);
+        config.setNit(nit);
+        config.setRazonSocial(razonSocial);
+        config.setRepresentanteLegal(representanteLegal);
+        config.setDomicilioComercial(domicilioComercial);
+        config.setCorreoHabeasData(correoHabeasData);
         return configuracionRepository.save(config);
     }
 }

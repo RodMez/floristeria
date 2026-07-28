@@ -3,6 +3,7 @@ package com.floristeria.floristeria.controller;
 import com.floristeria.floristeria.dto.ClienteActualizarRequestDTO;
 import com.floristeria.floristeria.dto.ClientePasswordRequestDTO;
 import com.floristeria.floristeria.dto.ClientePerfilResponseDTO;
+import com.floristeria.floristeria.dto.SupresionRequestDTO;
 import com.floristeria.floristeria.security.ClienteDetails;
 import com.floristeria.floristeria.service.ClienteAuthService;
 import jakarta.validation.Valid;
@@ -12,6 +13,7 @@ import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -47,5 +49,16 @@ public class ClientePerfilController {
             @Valid @RequestBody ClientePasswordRequestDTO request) {
         clienteAuthService.cambiarPassword(clienteDetails.getClienteId(), request);
         return ResponseEntity.ok(Map.of("mensaje", "Contraseña actualizada correctamente"));
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Map<String, String>> solicitarSupresion(
+            @AuthenticationPrincipal ClienteDetails clienteDetails,
+            @Valid @RequestBody SupresionRequestDTO request) {
+        String ticket = clienteAuthService.solicitarSupresion(clienteDetails.getClienteId(), request);
+        return ResponseEntity.ok(Map.of(
+                "mensaje", "Tu solicitud de supresión de datos ha sido registrada. Se procesará dentro de los 15 días hábiles siguientes conforme a la Ley 1581 de 2012.",
+                "ticket", ticket
+        ));
     }
 }

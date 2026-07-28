@@ -67,6 +67,22 @@ public class ConfiguracionTiendaDTO {
 
         @Size(max = 500, message = "El subtítulo del showcase no puede superar los 500 caracteres")
         private String showcaseSubtitulo;
+
+        @Size(max = 30, message = "El NIT no puede superar los 30 caracteres")
+        private String nit;
+
+        @Size(max = 200, message = "La razón social no puede superar los 200 caracteres")
+        private String razonSocial;
+
+        @Size(max = 150, message = "El representante legal no puede superar los 150 caracteres")
+        private String representanteLegal;
+
+        @Size(max = 300, message = "El domicilio comercial no puede superar los 300 caracteres")
+        private String domicilioComercial;
+
+        @Email(message = "El correo de Habeas Data debe ser válido")
+        @Size(max = 150, message = "El correo de Habeas Data no puede superar los 150 caracteres")
+        private String correoHabeasData;
     }
 
     @Data
@@ -94,6 +110,13 @@ public class ConfiguracionTiendaDTO {
         private String showcaseBadge;
         private String showcaseTitulo;
         private String showcaseSubtitulo;
+        private String nit;
+        private String razonSocial;
+        private String representanteLegal;
+        private String domicilioComercial;
+        private String correoHabeasData;
+        private String politicaVersionActual;
+        private String tycVersionActual;
     }
 
     @Data
@@ -117,5 +140,8 @@ public class ConfiguracionTiendaDTO {
         private String showcaseBadge;
         private String showcaseTitulo;
         private String showcaseSubtitulo;
+        private String correoHabeasData;
+        private String politicaVersionActual;
+        private String tycVersionActual;
     }
 }

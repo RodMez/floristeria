@@ -6,7 +6,9 @@ import com.floristeria.floristeria.dto.ClienteLoginDTO;
 import com.floristeria.floristeria.dto.ClientePasswordRequestDTO;
 import com.floristeria.floristeria.dto.ClientePerfilResponseDTO;
 import com.floristeria.floristeria.dto.ClienteRegistroDTO;
+import com.floristeria.floristeria.dto.SupresionRequestDTO;
 import com.floristeria.floristeria.entity.Cliente;
+import com.floristeria.floristeria.entity.EstadoSupresion;
 import com.floristeria.floristeria.repository.ClienteRepository;
 import com.floristeria.floristeria.security.JwtService;
 import com.floristeria.floristeria.service.ClienteAuthService;
@@ -15,6 +17,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +34,10 @@ public class ClienteAuthServiceImpl implements ClienteAuthService {
     public ClienteAuthResponseDTO registrar(ClienteRegistroDTO request) {
         String email = request.getEmail().toLowerCase().trim();
 
+        if (!Boolean.TRUE.equals(request.getAceptaHabeasData())) {
+            throw new IllegalArgumentException("Debes aceptar la política de tratamiento de datos personales para registrarte");
+        }
+
         // Validar que el email no exista
         if (clienteRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("El email ya está registrado");
@@ -40,6 +49,9 @@ public class ClienteAuthServiceImpl implements ClienteAuthService {
                 .email(email)
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .telefono(request.getTelefono())
+                .fechaConsentimientoHabeas(LocalDateTime.now())
+                .versionPoliticaHabeas("v1")
+                .estadoSupresion(EstadoSupresion.NINGUNA)
                 .build();
 
         cliente = clienteRepository.save(cliente);
@@ -124,5 +136,25 @@ public class ClienteAuthServiceImpl implements ClienteAuthService {
 
         cliente.setPasswordHash(passwordEncoder.encode(request.getNuevaPassword()));
         clienteRepository.save(cliente);
+    }
+
+    @Override
+    @Transactional
+    public String solicitarSupresion(Integer clienteId, SupresionRequestDTO request) {
+        Cliente cliente = clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new EntityNotFoundException("Cliente no encontrado"));
+
+        if (!passwordEncoder.matches(request.getPasswordActual(), cliente.getPasswordHash())) {
+            throw new IllegalArgumentException("La contraseña actual es incorrecta");
+        }
+
+        String ticket = "SUP-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+
+        cliente.setDeletedAt(LocalDateTime.now());
+        cliente.setFechaSolicitudSupresion(LocalDateTime.now());
+        cliente.setEstadoSupresion(EstadoSupresion.PENDIENTE);
+        clienteRepository.save(cliente);
+
+        return ticket;
     }
 }
