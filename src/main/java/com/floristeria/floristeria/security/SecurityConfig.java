@@ -46,6 +46,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
                         // 1. Rutas Públicas (no requieren autenticación)
+                        .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/api/auth/**", "/api/v1/clientes/auth/**").permitAll()
                         // Endpoints públicos de catálogo
                         .requestMatchers("/api/v1/catalogo/**", "/api/v1/sedes/**", "/api/v1/categorias/**", "/api/v1/zonas-domicilio/**", "/api/v1/configuracion", "/api/v1/banners/**", "/api/v1/resenas/producto/**").permitAll()
