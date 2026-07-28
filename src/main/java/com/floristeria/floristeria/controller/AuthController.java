@@ -33,7 +33,7 @@ public class AuthController {
         );
 
         UsuarioAdmin usuario = usuarioAdminRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new org.springframework.security.authentication.BadCredentialsException("Credenciales inválidas"));
 
         String token = jwtService.generateToken(usuario);
 

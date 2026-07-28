@@ -73,11 +73,11 @@ public class ClienteAuthServiceImpl implements ClienteAuthService {
     public ClienteAuthResponseDTO login(ClienteLoginDTO request) {
         // Buscar por email (normalizado a minúsculas)
         Cliente cliente = clienteRepository.findByEmail(request.getEmail().toLowerCase().trim())
-                .orElseThrow(() -> new IllegalArgumentException("Credenciales inválidas"));
+                .orElseThrow(() -> new org.springframework.security.authentication.BadCredentialsException("Credenciales inválidas"));
 
         // Verificar contraseña
         if (!passwordEncoder.matches(request.getPassword(), cliente.getPasswordHash())) {
-            throw new IllegalArgumentException("Credenciales inválidas");
+            throw new org.springframework.security.authentication.BadCredentialsException("Credenciales inválidas");
         }
 
         // Generar JWT

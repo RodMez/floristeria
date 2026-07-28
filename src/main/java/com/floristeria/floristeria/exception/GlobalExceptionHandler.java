@@ -121,6 +121,16 @@ public class GlobalExceptionHandler {
                         "mensaje", ex.getMensajeUsuario()));
     }
 
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    public ResponseEntity<Map<String, Object>> handleAuthenticationException(
+            org.springframework.security.core.AuthenticationException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of(
+                        "status", 401,
+                        "error", "Unauthorized",
+                        "mensaje", "Credenciales inválidas"));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
         log.error("Error interno", ex);
