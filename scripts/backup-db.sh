@@ -1,50 +1,63 @@
 #!/usr/bin/env bash
 #
-# backup-db.sh — Backup diario de PostgreSQL con upload a Backblaze B2.
+# backup-db.sh — Backup diario de PostgreSQL con upload a Google Drive.
 #
 # Uso:
 #   backup-db.sh                  # backup diario (retencion 14 dias)
-#   backup-db.sh --full           # backup completo sin rotacion local
 #
 # Requisitos en el VPS:
-#   apt-get install -y docker.io rclone
+#   apt-get install -y docker.io
+#   rclone (instalar SIN snap — la version snap corre confinada y no puede
+#   leer rutas fuera de $HOME como /var/backups, lo que rompe el upload con
+#   "error reading source root directory"):
+#     curl https://rclone.org/install.sh | sudo bash
 #
 # Variables de entorno (definir en /etc/floristeria/backup.env, chmod 600):
-#   B2_KEY_ID            — Application Key ID de Backblaze B2
-#   B2_APPLICATION_KEY   — Application Key (secret)
-#   B2_BUCKET_NAME       — Nombre del bucket B2 (ej. floristeria-backups)
 #   DB_CONTAINER_NAME    — Nombre del contenedor postgres (default: db_floristeria_prod)
 #   DB_USER              — Usuario de la base
 #   DB_NAME              — Nombre de la base
-#   BACKUP_RETENTION_DAYS — Dias a conservar en B2 (default: 14)
+#   BACKUP_RETENTION_DAYS — Dias a conservar en Drive (default: 14)
+#   GDRIVE_REMOTE_NAME   — nombre del remote configurado en rclone (el que tu elijas,
+#                          ej. PruebaTao, floristeria-drive, etc.)
+#   GDRIVE_FOLDER        — carpeta destino dentro del Drive (ej. floristeria-backups)
 #
-# Creacion del bucket y application key (documentacion):
+# Configuracion de Google Drive en rclone (documentacion):
 # -----------------------------------------------------------------------------
-# 1. Crear cuenta en https://backblaze.com y verificar email.
-# 2. En el panel B2, "Buckets" → "Create a Bucket":
-#      - Name: floristeria-backups  (o el que prefieras; sincronizar con B2_BUCKET_NAME)
-#      - Files are: Private
-#      - Encryption: optional (recomendado para PII de clientes)
-# 3. "Account" → "App Keys" → "Add a New Application Key":
-#      - Name: floristeria-backup
-#      - Allow access to Bucket(s): floristeria-backups
-#      - Capabilities: listBuckets, readFiles, writeFiles, deleteFiles
-#    Al crearla, B2 entrega:
-#      keyID      -> B2_KEY_ID
-#      applicationKey -> B2_APPLICATION_KEY (se muestra UNA sola vez)
-# 4. Configurar rclone en el VPS (interactivo, una sola vez):
+# 1. Crear/usar una cuenta de Google dedicada para backups (no personal).
+# 2. Crear un Client ID y Client Secret PROPIOS en Google Cloud Console
+#    (APIs & Services -> Credentials -> OAuth client ID -> Desktop app).
+#    NO usar el client_id compartido por defecto de rclone — con credenciales
+#    propias evitas los limites de cuota compartidos entre todos los usuarios
+#    de rclone en el mundo.
+# 3. Configurar rclone en el VPS (interactivo, una sola vez):
 #      rclone config
 #        -> n (new remote)
-#        -> name: b2
-#        -> storage: Backblaze B2
-#        -> account/key id: <B2_KEY_ID>
-#        -> application key: <B2_APPLICATION_KEY>
-#    Validar:
-#      rclone lsd b2:floristeria-backups
-# 5. Crear /etc/floristeria/backup.env (chmod 600, propietario root):
-#      B2_KEY_ID=<...>
-#      B2_APPLICATION_KEY=<...>
-#      B2_BUCKET_NAME=floristeria-backups
+#        -> name: <el nombre que elijas, debe coincidir con GDRIVE_REMOTE_NAME>
+#        -> storage: Google Drive (buscar "drive" en la lista)
+#        -> client_id:     <tu Client ID de Google Cloud>
+#        -> client_secret: <tu Client Secret de Google Cloud>
+#        -> scope: drive    (acceso completo)
+#        -> root_folder_id: (dejar en blanco)
+#        -> service_account_file: (dejar en blanco)
+#    Completar la autorizacion OAuth. Si el VPS no tiene navegador: responder
+#    "n" a "Use web browser to automatically authenticate", correr
+#    `rclone authorize "drive" <client_id> <client_secret>` en una maquina CON
+#    navegador (mismas credenciales), y pegar el token resultante de vuelta
+#    en la sesion del VPS que quedo esperando.
+#    Confirmar "Configure this as a Shared Drive? No" (a menos que uses Google
+#    Workspace con Drive compartido).
+# 4. Validar:
+#      rclone about <GDRIVE_REMOTE_NAME>:
+#      rclone lsd <GDRIVE_REMOTE_NAME>:
+# 5. Crear la carpeta destino:
+#      rclone mkdir <GDRIVE_REMOTE_NAME>:floristeria-backups
+# 6. El archivo de config resultante vive en ~/.config/rclone/rclone.conf
+#    (contiene el refresh token). Respaldar este archivo FUERA del VPS en el
+#    gestor de secretos off-VPS que ya definieron: si se pierde el VPS hay que
+#    reconfigurar rclone desde cero, perdiendo el token.
+# 7. Crear /etc/floristeria/backup.env (chmod 600, propietario root):
+#      GDRIVE_REMOTE_NAME=<el nombre que usaste en el paso 3>
+#      GDRIVE_FOLDER=floristeria-backups
 #      DB_CONTAINER_NAME=db_floristeria_prod
 #      DB_USER=admin
 #      DB_NAME=floristeria_db
@@ -56,7 +69,7 @@
 # Restauracion (probar en ambiente de pruebas ANTES de confiar en prod):
 # -----------------------------------------------------------------------------
 # 1. Descargar el archivo del dia:
-#      rclone copy b2:floristeria-backups/2026/07/25/floristeria_20260725_030000.sql.gz /tmp/
+#      rclone copy <GDRIVE_REMOTE_NAME>:floristeria-backups/2026/07/25/floristeria_20260725_030000.sql.gz /tmp/
 # 2. Detener el backend para no tener writes conflictivos:
 #      docker stop backend_floristeria_prod
 # 3. Restaurar la base (sobreescribe datos existentes — usar con cuidado):
@@ -65,17 +78,28 @@
 # 4. Reiniciar backend y verificar:
 #      docker start backend_floristeria_prod
 #      curl -fsS http://localhost:8080/actuator/health
-# 5. Probar en ambiente de pruebas primero (VPS staging o isntancia local):
+# 5. Probar en ambiente de pruebas primero (VPS staging o instancia local):
 #      - Restaurar a un contenedor postgres paralelo en puerto 5433.
 #      - Conectar el backend al staging y verificar pedidos, inventarios, etc.
 #    NOTA: Un backup no probado es un backup que no se sabe si sirve.
 #          Ejecutar el restore al menos UNA vez mensual como simulacro.
 #
-# Retencion en B2:
+# Retencion en Drive:
 # -----------------------------------------------------------------------------
-# rclone no hace retencion automatica; este script borra en B2 los archivos
-# anteriores a BACKUP_RETENTION_DAYS dias. Para reglas de retencion avanzadas
-# (lifecycle rules), configurarlas en el panel B2 → Bucket → Lifecycle.
+# rclone no hace retencion automatica; este script borra en Drive los archivos
+# anteriores a BACKUP_RETENTION_DAYS dias usando `rclone delete --min-age`
+# (NO `rclone purge`, que ignora --min-age y borraria TODO el arbol). La
+# rotacion apunta al folder completo para que --min-age pueda encontrar
+# backups viejos alojados en subcarpetas de fecha distintas a la de hoy.
+# Verificado con prueba real: `rclone delete ... --min-age 14d --dry-run -vv`
+# selecciona solo archivos viejos y respeta los recientes.
+#
+# Si un dia se falla a instalar rclone via snap en vez del instalador oficial:
+# el upload puede fallar con "error reading source root directory" porque el
+# snap corre confinado y no puede leer rutas fuera de $HOME (LOCAL_DIR vive en
+# /var/backups, fuera de $HOME). La solucion es desinstalar el snap y usar el
+# instalador oficial (ver "Requisitos" arriba) — no hay que tocar la logica
+# de este script para eso.
 # -----------------------------------------------------------------------------
 
 set -euo pipefail
@@ -86,9 +110,8 @@ if [[ -f "$ENV_FILE" ]]; then
   set -a; . "$ENV_FILE"; set +a
 fi
 
-: "${B2_KEY_ID:?Falta B2_KEY_ID}"
-: "${B2_APPLICATION_KEY:?Falta B2_APPLICATION_KEY}"
-: "${B2_BUCKET_NAME:?Falta B2_BUCKET_NAME}"
+: "${GDRIVE_REMOTE_NAME:?Falta GDRIVE_REMOTE_NAME}"
+: "${GDRIVE_FOLDER:?Falta GDRIVE_FOLDER}"
 : "${DB_CONTAINER_NAME:=db_floristeria_prod}"
 : "${DB_USER:?Falta DB_USER}"
 : "${DB_NAME:=floristeria_db}"  # fall back a nombre historico
@@ -98,10 +121,21 @@ TIMESTAMP=$(date -u +%Y%m%d_%H%M%S)
 DATE_PATH=$(date -u +%Y/%m/%d)
 LOCAL_DIR="${LOCAL_DIR:-/var/backups/floristeria}"
 LOCAL_FILE="${LOCAL_DIR}/floristeria_${TIMESTAMP}.sql.gz"
-B2_REMOTE="b2"
-B2_PATH="${B2_REMOTE}:${B2_BUCKET_NAME}/${DATE_PATH}/$(basename "$LOCAL_FILE")"
+GDRIVE_BASE="${GDRIVE_REMOTE_NAME}:${GDRIVE_FOLDER}"
+GDRIVE_PATH="${GDRIVE_BASE}/${DATE_PATH}/$(basename "$LOCAL_FILE")"
 
 mkdir -p "$LOCAL_DIR"
+
+# Limpieza automatica del archivo temporal local incluso si el script falla
+# a mitad de camino (ej. durante el upload).
+cleanup() {
+  local exit_code=$?
+  if [[ -f "$LOCAL_FILE" && "$exit_code" -ne 0 ]]; then
+    echo "[$(date -Is)] Limpieza: eliminando archivo temporal tras fallo (exit ${exit_code}): ${LOCAL_FILE}"
+    rm -f "$LOCAL_FILE"
+  fi
+}
+trap cleanup EXIT
 
 echo "[$(date -Is)] Iniciando backup de PostgreSQL..."
 
@@ -113,27 +147,36 @@ docker exec "$DB_CONTAINER_NAME" \
 LOCAL_SIZE=$(stat -c%s "$LOCAL_FILE" 2>/dev/null || stat -f%z "$LOCAL_FILE")
 echo "[$(date -Is)] Backup local creado: ${LOCAL_FILE} (${LOCAL_SIZE} bytes)"
 
-# 2. Upload a B2 con rclone
+# 2. Upload a Google Drive con rclone
 if ! command -v rclone >/dev/null 2>&1; then
-  echo "ERROR: rclone no instalado. Instalar con: apt-get install -y rclone" >&2
+  echo "ERROR: rclone no instalado. Instalar con: curl https://rclone.org/install.sh | sudo bash" >&2
   exit 2
 fi
 
-rclone copy "$LOCAL_FILE" "${B2_REMOTE}:${B2_BUCKET_NAME}/${DATE_PATH}/" \
+rclone copy "$LOCAL_FILE" "${GDRIVE_BASE}/${DATE_PATH}/" \
   --transfers 2 --quiet
 
-if ! rclone ls "${B2_REMOTE}:${B2_BUCKET_NAME}/${DATE_PATH}/$(basename "$LOCAL_FILE")" >/dev/null 2>&1; then
-  echo "ERROR: fallo verificacion upload a B2" >&2
+if ! rclone ls "${GDRIVE_BASE}/${DATE_PATH}/$(basename "$LOCAL_FILE")" >/dev/null 2>&1; then
+  echo "ERROR: fallo verificacion upload a Drive" >&2
   exit 3
 fi
-echo "[$(date -Is)] Upload B2 OK: ${B2_PATH}"
+echo "[$(date -Is)] Upload Drive OK: ${GDRIVE_PATH}"
 
 # 3. Rotacion local: mantener solo BACKUP_RETENTION_DAYS dias
 find "$LOCAL_DIR" -name "floristeria_*.sql.gz" -mtime +"$BACKUP_RETENTION_DAYS" -delete
 
-# 4. Rotacion en B2: eliminar archivos mas antiguos que BACKUP_RETENTION_DAYS
-rclone purge "${B2_REMOTE}:${B2_BUCKET_NAME}" \
+# 4. Rotacion en Drive: eliminar archivos mas antiguos que BACKUP_RETENTION_DAYS
+#    (rclone purge ignora --min-age y borraria TODO el arbol; se usa `delete`.
+#    Apuntar al folder completo, no a la ruta del dia, para que --min-age
+#    encuentre los backups viejos alojados en otras subcarpetas de fecha.)
+#    Un fallo aqui NO debe tumbar el backup (ya se subio correctamente arriba),
+#    pero SI debe quedar visible en el log — antes se ocultaba por completo con
+#    2>/dev/null, lo que hubiera dejado crecer el storage sin limite en
+#    silencio ante cualquier problema de token/cuota.
+if ! rclone delete "${GDRIVE_BASE}" \
   --min-age "${BACKUP_RETENTION_DAYS}d" \
-  --rmdirs=false 2>/dev/null || true
+  --rmdirs=false; then
+  echo "[$(date -Is)] WARNING: fallo la rotacion en Google Drive (backup del dia OK, revisar manualmente)" >&2
+fi
 
 echo "[$(date -Is)] Backup completado."
