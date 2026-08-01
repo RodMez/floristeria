@@ -117,8 +117,8 @@ fi
 : "${DB_NAME:=floristeria_db}"  # fall back a nombre historico
 : "${BACKUP_RETENTION_DAYS:=14}"
 
-TIMESTAMP=$(date -u +%Y%m%d_%H%M%S)
-DATE_PATH=$(date -u +%Y/%m/%d)
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+DATE_PATH=$(date +%Y/%m/%d)
 LOCAL_DIR="${LOCAL_DIR:-/var/backups/floristeria}"
 LOCAL_FILE="${LOCAL_DIR}/floristeria_${TIMESTAMP}.sql.gz"
 GDRIVE_BASE="${GDRIVE_REMOTE_NAME}:${GDRIVE_FOLDER}"
