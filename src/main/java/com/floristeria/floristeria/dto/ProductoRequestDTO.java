@@ -16,6 +16,7 @@ public class ProductoRequestDTO {
     private String nombre;
 
     @NotBlank
+    @Size(max = 1500, message = "La descripción no puede superar los 1500 caracteres")
     private String descripcion;
 
     @NotBlank
