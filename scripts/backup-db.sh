@@ -13,7 +13,13 @@
 #     curl https://rclone.org/install.sh | sudo bash
 #
 # Variables de entorno (definir en /etc/floristeria/backup.env, chmod 600):
-#   DB_CONTAINER_NAME    — Nombre del contenedor postgres (default: db_floristeria_prod)
+#   DB_CONTAINER_NAME     — (opcional) fija el nombre EXACTO del contenedor.
+#                            Si se omite, se resuelve dinamicamente buscando
+#                            un contenedor corriendo cuyo nombre empiece con
+#                            DB_CONTAINER_PATTERN. Dejar SIN fijar salvo que
+#                            el nombre real no matchee el patron.
+#   DB_CONTAINER_PATTERN  — Prefijo para buscar el contenedor postgres
+#                            (default: postgres-floristeria)
 #   DB_USER              — Usuario de la base
 #   DB_NAME              — Nombre de la base
 #   BACKUP_RETENTION_DAYS — Dias a conservar en Drive (default: 14)
@@ -58,7 +64,7 @@
 # 7. Crear /etc/floristeria/backup.env (chmod 600, propietario root):
 #      GDRIVE_REMOTE_NAME=<el nombre que usaste en el paso 3>
 #      GDRIVE_FOLDER=floristeria-backups
-#      DB_CONTAINER_NAME=db_floristeria_prod
+#      # DB_CONTAINER_NAME=db_floristeria_prod   # opcional: solo si el nombre real no matchea el patron
 #      DB_USER=admin
 #      DB_NAME=floristeria_db
 #      BACKUP_RETENTION_DAYS=14
@@ -112,10 +118,37 @@ fi
 
 : "${GDRIVE_REMOTE_NAME:?Falta GDRIVE_REMOTE_NAME}"
 : "${GDRIVE_FOLDER:?Falta GDRIVE_FOLDER}"
-: "${DB_CONTAINER_NAME:=db_floristeria_prod}"
 : "${DB_USER:?Falta DB_USER}"
 : "${DB_NAME:=floristeria_db}"  # fall back a nombre historico
 : "${BACKUP_RETENTION_DAYS:=14}"
+
+# Resolucion dinamica del contenedor de Postgres.
+#
+# Coolify le agrega a cada contenedor un sufijo (uuid/hash de deployment) que
+# cambia en cualquier recreate del servicio (redeploy, rebuild de imagen,
+# restart por healthcheck fallido), aunque no lo dispares manualmente. Si
+# DB_CONTAINER_NAME queda fijo en backup.env, el backup deja de encontrar el
+# contenedor en silencio (exit 1) hasta que alguien revisa el log a mano.
+#
+# En vez de fijar el nombre completo, se resuelve por patron en cada
+# corrida. DB_CONTAINER_PATTERN es configurable en backup.env por si el
+# prefijo cambia; por defecto "postgres-floristeria".
+: "${DB_CONTAINER_PATTERN:=postgres-floristeria}"
+
+if [[ -z "${DB_CONTAINER_NAME:-}" ]]; then
+  mapfile -t _matches < <(docker ps --format '{{.Names}}' | grep -E "^${DB_CONTAINER_PATTERN}")
+  if [[ "${#_matches[@]}" -eq 0 ]]; then
+    echo "ERROR: no se encontro ningun contenedor corriendo que matchee '${DB_CONTAINER_PATTERN}'." >&2
+    exit 4
+  elif [[ "${#_matches[@]}" -gt 1 ]]; then
+    echo "ERROR: se encontraron varios contenedores que matchean '${DB_CONTAINER_PATTERN}', fija DB_CONTAINER_NAME en backup.env:" >&2
+    printf '  %s\n' "${_matches[@]}" >&2
+    exit 4
+  fi
+  DB_CONTAINER_NAME="${_matches[0]}"
+fi
+
+echo "[$(date -Is)] Usando contenedor: ${DB_CONTAINER_NAME}"
 
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 DATE_PATH=$(date +%Y/%m/%d)
