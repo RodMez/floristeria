@@ -32,7 +32,7 @@ public class ConfiguracionTiendaServiceImpl implements ConfiguracionTiendaServic
     public ConfiguracionTienda actualizarConfiguracion(String correo, Boolean enviar, String whatsapp,
             String instagram, String facebook, String tiktok, String heroUrl, String bannerUrl,
             String nombreSitio, String tagline, String descripcion, String logoUrl, String iconUrl,
-            String historia, String mision, String vision,
+            String historia, String historiaImagenUrl, String mision, String vision,
             String showcaseBadge, String showcaseTitulo, String showcaseSubtitulo,
             String nit, String razonSocial, String representanteLegal, String domicilioComercial,
             String correoHabeasData) {
@@ -51,6 +51,7 @@ public class ConfiguracionTiendaServiceImpl implements ConfiguracionTiendaServic
         config.setLogoUrl(logoUrl);
         config.setIconUrl(iconUrl);
         config.setHistoria(historia);
+        config.setHistoriaImagenUrl(historiaImagenUrl);
         config.setMision(mision);
         config.setVision(vision);
         config.setShowcaseBadge(showcaseBadge);

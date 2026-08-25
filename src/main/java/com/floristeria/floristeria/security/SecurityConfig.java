@@ -22,8 +22,10 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpMethod;
 
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @Configuration
 @EnableWebSecurity
@@ -34,6 +36,7 @@ public class SecurityConfig {
     private final LoginRateLimitFilter loginRateLimitFilter;
     private final WebhookRateLimitFilter webhookRateLimitFilter;
     private final CustomUserDetailsService customUserDetailsService;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Value("${app.cors.allowed-origins}")
     private List<String> allowedOrigins;
@@ -44,6 +47,17 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType(org.springframework.http.MediaType.APPLICATION_JSON_VALUE);
+                            response.setCharacterEncoding("UTF-8");
+                            String msg = accessDeniedException.getMessage() != null ? accessDeniedException.getMessage().replace("\"", "'") : "Acceso denegado";
+                            String body = "{\"status\":403,\"error\":\"Forbidden\",\"mensaje\":\"" + msg + "\"}";
+                            response.getWriter().write(body);
+                        })
+                )
                 .authorizeHttpRequests(authz -> authz
                         // 1. Rutas Públicas (no requieren autenticación)
                         .requestMatchers("/actuator/health").permitAll()

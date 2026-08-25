@@ -121,6 +121,16 @@ public class GlobalExceptionHandler {
                         "mensaje", ex.getMensajeUsuario()));
     }
 
+    @ExceptionHandler(io.jsonwebtoken.ExpiredJwtException.class)
+    public ResponseEntity<Map<String, Object>> handleExpiredJwtException(io.jsonwebtoken.ExpiredJwtException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of(
+                        "status", 401,
+                        "error", "Unauthorized",
+                        "mensaje", "Sesión expirada, por favor inicia sesión nuevamente",
+                        "codigo", "TOKEN_EXPIRED"));
+    }
+
     @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
     public ResponseEntity<Map<String, Object>> handleAuthenticationException(
             org.springframework.security.core.AuthenticationException ex) {

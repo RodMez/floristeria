@@ -59,6 +59,9 @@ public class ConfiguracionTienda {
     @Column(name = "historia", columnDefinition = "TEXT")
     private String historia;
 
+    @Column(name = "historia_imagen_url")
+    private String historiaImagenUrl;
+
     @Column(name = "mision", columnDefinition = "TEXT")
     private String mision;
 

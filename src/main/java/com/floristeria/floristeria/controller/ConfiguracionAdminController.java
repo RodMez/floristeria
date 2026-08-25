@@ -39,6 +39,7 @@ public class ConfiguracionAdminController {
                 request.getLogoUrl(),
                 request.getIconUrl(),
                 request.getHistoria(),
+                request.getHistoriaImagenUrl(),
                 request.getMision(),
                 request.getVision(),
                 request.getShowcaseBadge(),
@@ -70,6 +71,7 @@ public class ConfiguracionAdminController {
                 .logoUrl(config.getLogoUrl())
                 .iconUrl(config.getIconUrl())
                 .historia(config.getHistoria())
+                .historiaImagenUrl(config.getHistoriaImagenUrl())
                 .mision(config.getMision())
                 .vision(config.getVision())
                 .showcaseBadge(config.getShowcaseBadge())

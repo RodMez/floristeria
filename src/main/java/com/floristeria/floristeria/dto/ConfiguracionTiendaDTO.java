@@ -53,6 +53,9 @@ public class ConfiguracionTiendaDTO {
         @Size(max = 10000, message = "La historia no puede superar los 10000 caracteres")
         private String historia;
 
+        @Size(max = 500, message = "La URL de la imagen de historia no puede superar los 500 caracteres")
+        private String historiaImagenUrl;
+
         @Size(max = 10000, message = "La misión no puede superar los 10000 caracteres")
         private String mision;
 
@@ -105,6 +108,7 @@ public class ConfiguracionTiendaDTO {
         private String logoUrl;
         private String iconUrl;
         private String historia;
+        private String historiaImagenUrl;
         private String mision;
         private String vision;
         private String showcaseBadge;
@@ -135,6 +139,7 @@ public class ConfiguracionTiendaDTO {
         private String logoUrl;
         private String iconUrl;
         private String historia;
+        private String historiaImagenUrl;
         private String mision;
         private String vision;
         private String showcaseBadge;

@@ -54,23 +54,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 if ("CLIENTE".equals(rol)) {
-                    // === FLUJO CLIENTE ===
-                    Integer clienteId = claims.get("clienteId", Integer.class);
+                    // === FLUJO CLIENTE === validar expiración explícitamente (antes no se validaba)
+                    if (jwtService.isTokenExpired(token)) {
+                        logger.warn("Token CLIENTE expirado para: " + email);
+                    } else {
+                        Integer clienteId = claims.get("clienteId", Integer.class);
 
-                    ClienteDetails clienteDetails = new ClienteDetails(
-                            email,
-                            "", // sin contraseña en el contexto
-                            Collections.singletonList(new SimpleGrantedAuthority("CLIENTE")),
-                            clienteId
-                    );
+                        ClienteDetails clienteDetails = new ClienteDetails(
+                                email,
+                                "", // sin contraseña en el contexto
+                                Collections.singletonList(new SimpleGrantedAuthority("CLIENTE")),
+                                clienteId
+                        );
 
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            clienteDetails,
-                            null,
-                            clienteDetails.getAuthorities()
-                    );
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                clienteDetails,
+                                null,
+                                clienteDetails.getAuthorities()
+                        );
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    }
                 } else {
                     // === FLUJO ADMIN ===
                     UserDetails dbUserDetails = userDetailsService.loadUserByUsername(email);

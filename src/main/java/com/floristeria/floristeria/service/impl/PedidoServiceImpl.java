@@ -256,7 +256,7 @@ public class PedidoServiceImpl implements PedidoService {
         savedPedido.setReferenciaPago(referencia);
         pedidoRepository.save(savedPedido);
 
-        long montoCentavos = savedPedido.getTotal().longValue() * 100;
+        long montoCentavos = savedPedido.getTotal().multiply(BigDecimal.valueOf(100)).setScale(0, RoundingMode.HALF_UP).longValueExact();
         String cadena = referencia + montoCentavos + "COP" + wompiIntegritySecret;
         String firmaIntegridad = generarSha256Hex(cadena);
 
@@ -292,8 +292,8 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     public List<PedidoAdminResponseDTO> obtenerPedidosPorSede(Integer sedeId) {
         List<Pedido> pedidos = (sedeId == null)
-                ? pedidoRepository.findAll()
-                : pedidoRepository.findBySede_Id(sedeId);
+                ? pedidoRepository.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "creadoEn"))
+                : pedidoRepository.findBySede_IdOrderByCreadoEnDesc(sedeId);
 
         return pedidos.stream()
                 .map(this::mapToAdminResponseDTO)
@@ -478,7 +478,7 @@ public class PedidoServiceImpl implements PedidoService {
             return;
         }
 
-        long montoEsperadoCentavos = pedido.getTotal().multiply(BigDecimal.valueOf(100)).longValue();
+        long montoEsperadoCentavos = pedido.getTotal().multiply(BigDecimal.valueOf(100)).setScale(0, RoundingMode.HALF_UP).longValueExact();
         if (!String.valueOf(montoEsperadoCentavos).equals(amountInCents)) {
             log.error("Webhook Wompi - monto mismatch: esperado={} recibido={} pedido={}",
                     montoEsperadoCentavos, amountInCents, pedido.getCodigo());

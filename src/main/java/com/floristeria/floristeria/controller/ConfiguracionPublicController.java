@@ -31,6 +31,7 @@ public class ConfiguracionPublicController {
                 .logoUrl(config.getLogoUrl())
                 .iconUrl(config.getIconUrl())
                 .historia(config.getHistoria())
+                .historiaImagenUrl(config.getHistoriaImagenUrl())
                 .mision(config.getMision())
                 .vision(config.getVision())
                 .showcaseBadge(config.getShowcaseBadge())
