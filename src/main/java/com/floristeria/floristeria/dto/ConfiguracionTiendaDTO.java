@@ -41,7 +41,7 @@ public class ConfiguracionTiendaDTO {
         @Size(max = 150, message = "El tagline no puede superar los 150 caracteres")
         private String tagline;
 
-        @Size(max = 500, message = "La descripción no puede superar los 500 caracteres")
+        @Size(max = 1000, message = "La descripción no puede superar los 1000 caracteres")
         private String descripcion;
 
         @Size(max = 500, message = "La URL del logo no puede superar los 500 caracteres")

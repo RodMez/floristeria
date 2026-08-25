@@ -47,7 +47,7 @@ public class ConfiguracionTienda {
     @Column(name = "tagline")
     private String tagline;
 
-    @Column(name = "descripcion", length = 500)
+    @Column(name = "descripcion", length = 1000)
     private String descripcion;
 
     @Column(name = "logo_url")
