@@ -422,6 +422,11 @@ public class PedidoServiceImpl implements PedidoService {
         pedidoRepository.save(pedido);
 
         deducirInventario(pedido);
+        try {
+            emailService.notificarNuevaVenta(pedido.getCodigo());
+        } catch (Exception e) {
+            log.error("Error enviando correo tras procesarPagoExitoso para pedido {}: {}", pedido.getCodigo(), e.getMessage(), e);
+        }
     }
 
     @Transactional
@@ -503,7 +508,9 @@ public class PedidoServiceImpl implements PedidoService {
             notificarAlertaStockInsuficiente(pedido, e.getMessage());
         }
 
-        emailService.notificarNuevaVenta(pedido);
+        // Notificación por código: el @Async carga con fetch dentro de su propia transacción (evita LazyInitializationException)
+        log.info("Webhook Wompi — pedido {} marcado PAGADO, disparando notificaciones", pedido.getCodigo());
+        emailService.notificarNuevaVenta(pedido.getCodigo());
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

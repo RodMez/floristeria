@@ -2,6 +2,7 @@ package com.floristeria.floristeria.repository;
 
 import com.floristeria.floristeria.entity.EstadoPedido;
 import com.floristeria.floristeria.entity.Pedido;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,6 +25,10 @@ public interface PedidoRepository extends JpaRepository<Pedido, Integer> {
     List<Pedido> findByCliente_IdOrderByCreadoEnDesc(Integer clienteId);
 
     Optional<Pedido> findByCodigo(String codigo);
+
+    @EntityGraph(attributePaths = {"sede", "cliente", "direccion", "direccion.zonaDomicilio", "detalles", "detalles.producto"})
+    @Query("SELECT p FROM Pedido p WHERE p.codigo = :codigo")
+    Optional<Pedido> findByCodigoWithFetch(@Param("codigo") String codigo);
 
     boolean existsBySede_IdAndEstadoNotIn(Integer sedeId, List<EstadoPedido> estados);
 

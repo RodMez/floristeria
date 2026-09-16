@@ -6,14 +6,18 @@ import com.floristeria.floristeria.entity.Direccion;
 import com.floristeria.floristeria.entity.Pedido;
 import com.floristeria.floristeria.entity.Producto;
 import com.floristeria.floristeria.entity.ZonaDomicilio;
+import com.floristeria.floristeria.repository.PedidoRepository;
 import com.floristeria.floristeria.service.ConfiguracionTiendaService;
 import com.floristeria.floristeria.service.EmailService;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
@@ -31,6 +35,7 @@ public class EmailServiceImpl implements EmailService {
 
     private final RestTemplate restTemplate;
     private final ConfiguracionTiendaService configuracionService;
+    private final PedidoRepository pedidoRepository;
 
     @Value("${brevo.api-key}")
     private String brevoApiKey;
@@ -46,6 +51,16 @@ public class EmailServiceImpl implements EmailService {
 
     private static final String BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
+    @PostConstruct
+    void validarConfiguracionBrevo() {
+        if (brevoApiKey == null || brevoApiKey.contains("placeholder") || brevoApiKey.isBlank()) {
+            log.warn("BREVO_API_KEY no configurado o es placeholder — los correos no se enviarán");
+        }
+        if (brevoSenderEmail == null || brevoSenderEmail.contains("placeholder") || brevoSenderEmail.isBlank()) {
+            log.warn("BREVO_SENDER_EMAIL no configurado o es placeholder — Brevo rechazará los envíos");
+        }
+    }
+
     // ── Brand colors ──
     private static final String C_MUSTARD = "#E5BE6F";
     private static final String C_MUSTARD_DARK = "#8B7230";
@@ -59,39 +74,79 @@ public class EmailServiceImpl implements EmailService {
     private static final String C_BORDER = "#E7E5E4";
 
     @Async
+    @Transactional(readOnly = true)
     @Override
-    public void notificarNuevaVenta(Pedido pedido) {
+    public void notificarNuevaVenta(String codigoPedido) {
+        if (codigoPedido == null || codigoPedido.isBlank()) {
+            log.error("notificarNuevaVenta llamado con codigo vacío");
+            return;
+        }
         try {
+            Pedido pedido = pedidoRepository.findByCodigoWithFetch(codigoPedido)
+                    .orElse(null);
+            if (pedido == null) {
+                log.error("notificarNuevaVenta: pedido no encontrado con codigo {}", codigoPedido);
+                return;
+            }
+            log.info("Enviando notificaciones de venta para pedido {} (estado={})", pedido.getCodigo(), pedido.getEstado());
             String nombreSede = pedido.getSede() != null ? pedido.getSede().getNombre() : "Sede no disponible";
+            int enviados = 0;
 
-            if (pedido.getCliente() != null && pedido.getCliente().getEmail() != null) {
-                String asuntoCliente = "Recibo de tu compra - " + nombreSede;
-                String htmlCliente = construirHtmlReciboCliente(pedido);
-                enviarCorreoBrevo(pedido.getCliente().getEmail(), pedido.getCliente().getNombre(),
-                        asuntoCliente, htmlCliente);
+            if (pedido.getCliente() != null && pedido.getCliente().getEmail() != null && !pedido.getCliente().getEmail().isBlank()) {
+                try {
+                    String asuntoCliente = "Recibo de tu compra - " + nombreSede;
+                    String htmlCliente = construirHtmlReciboCliente(pedido);
+                    enviarCorreoBrevo(pedido.getCliente().getEmail(), pedido.getCliente().getNombre(),
+                            asuntoCliente, htmlCliente);
+                    enviados++;
+                    log.info("Correo cliente enviado a {} para pedido {}", pedido.getCliente().getEmail(), pedido.getCodigo());
+                } catch (Exception e) {
+                    log.error("Error enviando correo cliente para pedido {} a {}: {}", pedido.getCodigo(),
+                            pedido.getCliente().getEmail(), e.getMessage(), e);
+                }
+            } else {
+                log.warn("Pedido {} sin email de cliente — no se envía recibo", pedido.getCodigo());
             }
 
             if (pedido.getSede() != null && pedido.getSede().getEmail() != null
                     && !pedido.getSede().getEmail().isBlank()) {
-                String asuntoSede = "\uD83C\uDF3A NUEVA VENTA - " + nombreSede;
-                String htmlSede = construirHtmlNuevaVenta(pedido);
-                enviarCorreoBrevo(pedido.getSede().getEmail(), pedido.getSede().getNombre(),
-                        asuntoSede, htmlSede);
+                try {
+                    String asuntoSede = "\uD83C\uDF3A NUEVA VENTA - " + nombreSede;
+                    String htmlSede = construirHtmlNuevaVenta(pedido);
+                    enviarCorreoBrevo(pedido.getSede().getEmail(), pedido.getSede().getNombre(),
+                            asuntoSede, htmlSede);
+                    enviados++;
+                    log.info("Correo sede enviado a {} para pedido {}", pedido.getSede().getEmail(), pedido.getCodigo());
+                } catch (Exception e) {
+                    log.error("Error enviando correo sede para pedido {} a {}: {}", pedido.getCodigo(),
+                            pedido.getSede().getEmail(), e.getMessage(), e);
+                }
+            } else {
+                log.warn("Pedido {} — sede sin email configurado, no se notifica a sede", pedido.getCodigo());
             }
 
-            ConfiguracionTienda config = configuracionService.obtenerConfiguracion();
-            if (Boolean.TRUE.equals(config.getEnviarCopiaMaestro())
-                    && config.getCorreoMaestro() != null
-                    && !config.getCorreoMaestro().isBlank()) {
-                String asuntoMaestro = "\uD83C\uDF3A NUEVA VENTA - " + nombreSede;
-                String htmlMaestro = construirHtmlCopiaMaestro(pedido);
-                enviarCorreoBrevo(config.getCorreoMaestro(), "Administrador",
-                        asuntoMaestro, htmlMaestro);
+            try {
+                ConfiguracionTienda config = configuracionService.obtenerConfiguracion();
+                if (Boolean.TRUE.equals(config.getEnviarCopiaMaestro())
+                        && config.getCorreoMaestro() != null
+                        && !config.getCorreoMaestro().isBlank()) {
+                    String asuntoMaestro = "\uD83C\uDF3A NUEVA VENTA - " + nombreSede;
+                    String htmlMaestro = construirHtmlCopiaMaestro(pedido);
+                    enviarCorreoBrevo(config.getCorreoMaestro(), "Administrador",
+                            asuntoMaestro, htmlMaestro);
+                    enviados++;
+                    log.info("Correo maestro enviado a {} para pedido {}", config.getCorreoMaestro(), pedido.getCodigo());
+                } else {
+                    log.info("Pedido {} — copia maestro deshabilitada o sin correo configurado", pedido.getCodigo());
+                }
+            } catch (Exception e) {
+                log.error("Error enviando correo maestro para pedido {}: {}", pedido.getCodigo(), e.getMessage(), e);
             }
+
+            log.info("Notificaciones de venta para pedido {} completadas: {} correos enviados", pedido.getCodigo(), enviados);
 
         } catch (Exception e) {
-            log.error("Error al enviar notificación de venta para pedido #{}: {}",
-                    pedido.getId(), e.getMessage());
+            log.error("Error al enviar notificación de venta para pedido #{}: {}", codigoPedido, e.getMessage(), e);
         }
     }
 
@@ -112,11 +167,20 @@ public class EmailServiceImpl implements EmailService {
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
-        ResponseEntity<String> response = restTemplate.exchange(
-                BREVO_API_URL, HttpMethod.POST, request, String.class);
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    BREVO_API_URL, HttpMethod.POST, request, String.class);
 
-        if (!response.getStatusCode().is2xxSuccessful()) {
-            log.error("Brevo respondió con estado {} para {}", response.getStatusCode(), toEmail);
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                String respBody = response.getBody() != null ? response.getBody() : "";
+                log.error("Brevo respondió con estado {} para {} — body: {}", response.getStatusCode(), toEmail, respBody);
+                throw new IllegalStateException("Brevo error " + response.getStatusCode() + " para " + toEmail + ": " + respBody);
+            }
+            log.info("Brevo OK para {} — status {}", toEmail, response.getStatusCode());
+        } catch (RestClientException e) {
+            // RestTemplate lanza excepción en 4xx/5xx por defecto
+            log.error("Brevo RestClientException para {}: {}", toEmail, e.getMessage(), e);
+            throw e;
         }
     }
 
