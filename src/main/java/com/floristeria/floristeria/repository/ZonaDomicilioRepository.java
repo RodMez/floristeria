@@ -14,6 +14,12 @@ import java.util.List;
 public interface ZonaDomicilioRepository extends JpaRepository<ZonaDomicilio, Integer> {
     List<ZonaDomicilio> findBySedeId(Integer sedeId);
 
+    @Query("SELECT z FROM ZonaDomicilio z JOIN FETCH z.sede ORDER BY z.sede.nombre, z.localidad, z.barrio")
+    List<ZonaDomicilio> findAllWithSede();
+
+    @Query("SELECT z FROM ZonaDomicilio z JOIN FETCH z.sede WHERE z.sede.id = :sedeId ORDER BY z.localidad, z.barrio")
+    List<ZonaDomicilio> findBySedeIdWithSede(@Param("sedeId") Integer sedeId);
+
     @Query(value = "SELECT COUNT(*) > 0 FROM Zonas_Domicilio " +
            "WHERE LOWER(unaccent(localidad)) = LOWER(unaccent(:localidad)) " +
            "AND LOWER(unaccent(COALESCE(barrio, ''))) = LOWER(unaccent(COALESCE(:barrio, ''))) " +
