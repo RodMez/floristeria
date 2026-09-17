@@ -1,10 +1,10 @@
 package com.floristeria.floristeria.service;
 
-import com.floristeria.floristeria.config.ClockConfig;
 import com.floristeria.floristeria.entity.Sede;
 import com.floristeria.floristeria.exception.FechaEntregaInvalidaException;
 import com.floristeria.floristeria.repository.FechaBloqueadaSedeRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;
@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class FechaEntregaValidator {
@@ -92,6 +93,8 @@ public class FechaEntregaValidator {
                     try {
                         return DayOfWeek.valueOf(s.toUpperCase());
                     } catch (IllegalArgumentException e) {
+                        log.warn("diasNoEntrega con valor invalido '{}' en sede id={} — se ignora (usar MONDAY..SUNDAY)",
+                                s, sede.getId());
                         return null;
                     }
                 })
