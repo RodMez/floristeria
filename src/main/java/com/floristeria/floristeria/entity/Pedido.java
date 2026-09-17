@@ -7,7 +7,9 @@ import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -51,6 +53,12 @@ public class Pedido {
 
     @Column(name = "notas_entrega")
     private String notasEntrega;
+
+    @Column(name = "fecha_entrega")
+    private LocalDate fechaEntrega;
+
+    @Column(name = "hora_entrega")
+    private LocalTime horaEntrega;
 
     @Column(name = "total", nullable = false, precision = 19, scale = 4)
     private BigDecimal total;

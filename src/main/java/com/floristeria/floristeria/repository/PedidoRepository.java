@@ -32,6 +32,8 @@ public interface PedidoRepository extends JpaRepository<Pedido, Integer> {
 
     boolean existsBySede_IdAndEstadoNotIn(Integer sedeId, List<EstadoPedido> estados);
 
+    List<Pedido> findBySede_IdAndFechaEntregaBetween(Integer sedeId, java.time.LocalDate desde, java.time.LocalDate hasta);
+
     @Query("SELECT CASE WHEN COUNT(dp) > 0 THEN true ELSE false END FROM Pedido p JOIN p.detalles dp WHERE p.cliente.id = :clienteId AND dp.producto.id = :productoId AND p.estado = :estado AND p.deletedAt IS NULL")
     boolean existsByClienteIdAndProductoIdAndEstado(@Param("clienteId") Integer clienteId, @Param("productoId") Integer productoId, @Param("estado") EstadoPedido estado);
 

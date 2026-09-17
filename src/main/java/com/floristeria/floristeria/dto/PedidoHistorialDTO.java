@@ -1,7 +1,9 @@
 package com.floristeria.floristeria.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 import lombok.Builder;
@@ -27,6 +29,9 @@ public class PedidoHistorialDTO {
     private String clienteNombre;
     private String clienteEmail;
     private String clienteTelefono;
+    private LocalDate fechaEntrega;
+    private LocalTime horaEntrega;
+    private String franjaEntrega;
 
     @Getter
     @Setter

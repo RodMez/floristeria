@@ -1,5 +1,6 @@
 package com.floristeria.floristeria.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
@@ -9,6 +10,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Data
@@ -26,6 +29,14 @@ public class PedidoRequestDTO {
     private Integer direccionId;
 
     private String notasEntrega;
+
+    @NotNull(message = "La fecha de entrega es obligatoria")
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate fechaEntrega;
+
+    @NotNull(message = "La hora de entrega es obligatoria")
+    @JsonFormat(pattern = "HH:mm")
+    private LocalTime horaEntrega;
 
     @NotEmpty(message = "Debe haber al menos un producto en el pedido")
     @Valid

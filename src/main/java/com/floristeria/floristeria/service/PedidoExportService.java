@@ -57,6 +57,7 @@ import com.floristeria.floristeria.entity.Direccion;
 import com.floristeria.floristeria.entity.EstadoPedido;
 import com.floristeria.floristeria.entity.Pedido;
 import com.floristeria.floristeria.repository.PedidoRepository;
+import com.floristeria.floristeria.service.FechaEntregaValidator;
 
 import lombok.RequiredArgsConstructor;
 
@@ -143,6 +144,10 @@ public class PedidoExportService {
                 .referenciaPago(pedido.getReferenciaPago() != null ? pedido.getReferenciaPago() : "")
                 .direccionEntrega(direccionEntrega)
                 .notasEntrega(pedido.getNotasEntrega() != null ? pedido.getNotasEntrega() : "")
+                .fechaEntrega(pedido.getFechaEntrega())
+                .horaEntrega(pedido.getHoraEntrega())
+                .franjaEntrega(pedido.getHoraEntrega() != null
+                        ? FechaEntregaValidator.formatearSlot(pedido.getHoraEntrega()) : "")
                 .build();
     }
 
@@ -522,7 +527,8 @@ public class PedidoExportService {
                                    CellStyle headerStyle, CellStyle cellStyle,
                                    CellStyle fechaStyle, CellStyle moneyStyle) {
         String[] cabeceras = {"Código", "Fecha", "Cliente", "Teléfono", "Email", "Sede",
-                              "Total (incl. envío)", "Envío", "Estado", "Método Pago", "Referencia", "Dirección", "Notas"};
+                              "Total (incl. envío)", "Envío", "Estado", "Método Pago", "Referencia", "Dirección", "Notas",
+                              "Fecha Entrega", "Hora Entrega", "Franja"};
 
         XSSFRow headerRow = sheet.createRow(0);
         for (int i = 0; i < cabeceras.length; i++) {
@@ -549,6 +555,9 @@ public class PedidoExportService {
             createCell(row, 10, pedido.getReferenciaPago(), cellStyle);
             createCell(row, 11, pedido.getDireccionEntrega(), cellStyle);
             createCell(row, 12, pedido.getNotasEntrega(), cellStyle);
+            createCell(row, 13, pedido.getFechaEntrega() != null ? pedido.getFechaEntrega().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "", cellStyle);
+            createCell(row, 14, pedido.getHoraEntrega() != null ? pedido.getHoraEntrega().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) : "", cellStyle);
+            createCell(row, 15, pedido.getFranjaEntrega() != null ? pedido.getFranjaEntrega() : "", cellStyle);
         }
 
         for (int i = 0; i < cabeceras.length; i++) {

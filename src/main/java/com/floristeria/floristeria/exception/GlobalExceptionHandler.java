@@ -32,6 +32,17 @@ public class GlobalExceptionHandler {
                         "mensaje", ex.getMessage()));
     }
 
+    @ExceptionHandler(FechaEntregaInvalidaException.class)
+    public ResponseEntity<Map<String, Object>> handleFechaEntregaInvalidaException(FechaEntregaInvalidaException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(Map.of(
+                        "status", 422,
+                        "error", "Unprocessable Entity",
+                        "mensaje", ex.getMessage(),
+                        "codigo", "FECHA_ENTREGA_INVALIDA",
+                        "campo", ex.getCampo()));
+    }
+
     @ExceptionHandler(ZonaExcluidaException.class)
     public ResponseEntity<Map<String, Object>> handleZonaExcluidaException(ZonaExcluidaException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)

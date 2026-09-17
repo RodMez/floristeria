@@ -65,6 +65,7 @@ public class SedeServiceImpl implements SedeService {
         sede.setFacebookUrl(requestDTO.getFacebookUrl());
         sede.setTiktokUrl(requestDTO.getTiktokUrl());
         sede.setEmail(requestDTO.getEmail());
+        aplicarConfigEntrega(sede, requestDTO);
 
         Sede sedeGuardada = sedeRepository.save(sede);
 
@@ -106,6 +107,7 @@ public class SedeServiceImpl implements SedeService {
         sede.setFacebookUrl(requestDTO.getFacebookUrl());
         sede.setTiktokUrl(requestDTO.getTiktokUrl());
         sede.setEmail(requestDTO.getEmail());
+        aplicarConfigEntrega(sede, requestDTO);
 
         Sede sedeActualizada = sedeRepository.save(sede);
         return toResponseDTO(sedeActualizada);
@@ -160,6 +162,51 @@ public class SedeServiceImpl implements SedeService {
                 .facebookUrl(sede.getFacebookUrl())
                 .tiktokUrl(sede.getTiktokUrl())
                 .email(sede.getEmail())
+                .horaAperturaEntrega(sede.getHoraAperturaEntrega() != null ? sede.getHoraAperturaEntrega().toString() : "08:00")
+                .horaCierreEntrega(sede.getHoraCierreEntrega() != null ? sede.getHoraCierreEntrega().toString() : "17:00")
+                .horaCorte(sede.getHoraCorte() != null ? sede.getHoraCorte().toString() : "15:30")
+                .ventanaMaxDias(sede.getVentanaMaxDias() != null ? sede.getVentanaMaxDias() : 30)
+                .leadMinutos(sede.getLeadMinutos() != null ? sede.getLeadMinutos() : 60)
+                .diasNoEntrega(sede.getDiasNoEntrega() != null ? sede.getDiasNoEntrega() : "")
                 .build();
+    }
+
+    private void aplicarConfigEntrega(Sede sede, SedeRequestDTO dto) {
+        if (dto.getHoraAperturaEntrega() != null && !dto.getHoraAperturaEntrega().isBlank()) {
+            try { sede.setHoraAperturaEntrega(java.time.LocalTime.parse(dto.getHoraAperturaEntrega())); }
+            catch (Exception e) { throw new IllegalArgumentException("horaAperturaEntrega inválida (HH:mm)"); }
+        }
+        if (dto.getHoraCierreEntrega() != null && !dto.getHoraCierreEntrega().isBlank()) {
+            try { sede.setHoraCierreEntrega(java.time.LocalTime.parse(dto.getHoraCierreEntrega())); }
+            catch (Exception e) { throw new IllegalArgumentException("horaCierreEntrega inválida (HH:mm)"); }
+        }
+        if (dto.getHoraCorte() != null && !dto.getHoraCorte().isBlank()) {
+            try { sede.setHoraCorte(java.time.LocalTime.parse(dto.getHoraCorte())); }
+            catch (Exception e) { throw new IllegalArgumentException("horaCorte inválida (HH:mm)"); }
+        }
+        if (dto.getVentanaMaxDias() != null) {
+            if (dto.getVentanaMaxDias() < 1 || dto.getVentanaMaxDias() > 90) {
+                throw new IllegalArgumentException("ventanaMaxDias debe estar entre 1 y 90");
+            }
+            sede.setVentanaMaxDias(dto.getVentanaMaxDias());
+        }
+        if (dto.getLeadMinutos() != null) {
+            if (dto.getLeadMinutos() < 30 || dto.getLeadMinutos() > 480) {
+                throw new IllegalArgumentException("leadMinutos debe estar entre 30 y 480");
+            }
+            sede.setLeadMinutos(dto.getLeadMinutos());
+        }
+        if (dto.getDiasNoEntrega() != null) {
+            String norm = dto.getDiasNoEntrega().trim().toUpperCase();
+            if (!norm.isEmpty()) {
+                for (String d : norm.split(",")) {
+                    try { java.time.DayOfWeek.valueOf(d.trim()); }
+                    catch (IllegalArgumentException e) {
+                        throw new IllegalArgumentException("diasNoEntrega inválido: " + d.trim() + " (usar MONDAY..SUNDAY separados por coma)");
+                    }
+                }
+            }
+            sede.setDiasNoEntrega(norm);
+        }
     }
 }

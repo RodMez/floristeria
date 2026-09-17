@@ -1,7 +1,9 @@
 package com.floristeria.floristeria.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 import lombok.Builder;
@@ -30,6 +32,9 @@ public class PedidoAdminResponseDTO {
     private BigDecimal costoEnvio;
     private String zonaDomicilioNombre;
     private String notasEntrega;
+    private LocalDate fechaEntrega;
+    private LocalTime horaEntrega;
+    private String franjaEntrega;
 
     @Getter
     @Setter

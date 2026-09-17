@@ -11,6 +11,7 @@ import com.floristeria.floristeria.entity.*;
 import com.floristeria.floristeria.repository.*;
 import com.floristeria.floristeria.service.ConfiguracionTiendaService;
 import com.floristeria.floristeria.service.EmailService;
+import com.floristeria.floristeria.service.FechaEntregaValidator;
 import com.floristeria.floristeria.service.PedidoService;
 import com.floristeria.floristeria.exception.ZonaExcluidaException;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +51,7 @@ public class PedidoServiceImpl implements PedidoService {
     private final InventarioRepository inventarioRepository;
     private final EmailService emailService;
     private final ConfiguracionTiendaService configuracionService;
+    private final FechaEntregaValidator fechaEntregaValidator;
 
     @Value("${wompi.public-key}")
     private String wompiPublicKey;
@@ -72,6 +74,8 @@ public class PedidoServiceImpl implements PedidoService {
         Direccion direccion = direccionRepository.findById(request.getDireccionId())
                 .orElseThrow(() -> new EntityNotFoundException("Dirección no encontrada"));
 
+        fechaEntregaValidator.validar(sede, request.getFechaEntrega(), request.getHoraEntrega());
+
         BigDecimal total = BigDecimal.ZERO;
         List<DetallePedido> detallesPedidos = new ArrayList<>();
 
@@ -81,6 +85,8 @@ public class PedidoServiceImpl implements PedidoService {
                 .cliente(cliente)
                 .direccion(direccion)
                 .notasEntrega(request.getNotasEntrega())
+                .fechaEntrega(request.getFechaEntrega())
+                .horaEntrega(request.getHoraEntrega())
                 .total(BigDecimal.ZERO)
                 .build();
 
@@ -181,6 +187,8 @@ public class PedidoServiceImpl implements PedidoService {
             throw new ZonaExcluidaException("Esta zona de domicilio no está disponible para domicilio. Puedes contactarnos por WhatsApp para realizar tu pedido.");
         }
 
+        fechaEntregaValidator.validar(sede, request.getFechaEntrega(), request.getHoraEntrega());
+
         // Calcular total y validar stock desde Inventario
         BigDecimal total = BigDecimal.ZERO;
         List<DetallePedido> detallesPedidos = new ArrayList<>();
@@ -192,6 +200,8 @@ public class PedidoServiceImpl implements PedidoService {
                 .direccion(direccion)
                 .costoEnvio(zonaDomicilio.getPrecio())
                 .notasEntrega(request.getNotasEntrega())
+                .fechaEntrega(request.getFechaEntrega())
+                .horaEntrega(request.getHoraEntrega())
                 .total(BigDecimal.ZERO) // Temporal, se actualiza después
                 .aceptaTerminos(true)
                 .fechaAceptacionTyc(LocalDateTime.now())
@@ -383,6 +393,10 @@ public class PedidoServiceImpl implements PedidoService {
                         : "Zona no especificada"
                 )
                 .notasEntrega(pedido.getNotasEntrega())
+                .fechaEntrega(pedido.getFechaEntrega())
+                .horaEntrega(pedido.getHoraEntrega())
+                .franjaEntrega(pedido.getHoraEntrega() != null
+                        ? FechaEntregaValidator.formatearSlot(pedido.getHoraEntrega()) : null)
                 .build();
     }
 
@@ -628,6 +642,10 @@ public class PedidoServiceImpl implements PedidoService {
                               : "")
                         : "Zona no especificada"
                 )
+                .fechaEntrega(pedido.getFechaEntrega())
+                .horaEntrega(pedido.getHoraEntrega())
+                .franjaEntrega(pedido.getHoraEntrega() != null
+                        ? FechaEntregaValidator.formatearSlot(pedido.getHoraEntrega()) : null)
                 .build();
     }
 }

@@ -24,4 +24,16 @@ public class SedeRequestDTO {
     private String tiktokUrl;
 
     private String email;
+
+    private String horaAperturaEntrega;
+
+    private String horaCierreEntrega;
+
+    private String horaCorte;
+
+    private Integer ventanaMaxDias;
+
+    private Integer leadMinutos;
+
+    private String diasNoEntrega;
 }

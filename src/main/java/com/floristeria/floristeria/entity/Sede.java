@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "Sedes")
@@ -43,4 +44,28 @@ public class Sede {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    @Column(name = "hora_apertura_entrega")
+    @Builder.Default
+    private LocalTime horaAperturaEntrega = LocalTime.of(8, 0);
+
+    @Column(name = "hora_cierre_entrega")
+    @Builder.Default
+    private LocalTime horaCierreEntrega = LocalTime.of(17, 0);
+
+    @Column(name = "hora_corte")
+    @Builder.Default
+    private LocalTime horaCorte = LocalTime.of(15, 30);
+
+    @Column(name = "ventana_max_dias")
+    @Builder.Default
+    private Integer ventanaMaxDias = 30;
+
+    @Column(name = "lead_minutos")
+    @Builder.Default
+    private Integer leadMinutos = 60;
+
+    @Column(name = "dias_no_entrega", length = 64)
+    @Builder.Default
+    private String diasNoEntrega = "";
 }

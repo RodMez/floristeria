@@ -390,14 +390,21 @@ public class EmailServiceImpl implements EmailService {
 
     private String calcularFechaEntregaEstimada(Pedido pedido) {
         if (pedido.getCreadoEn() == null) return "";
-        LocalDate base = pedido.getCreadoEn().toLocalDate();
-        LocalDate estimada = base.plusDays(1);
-        if (estimada.getDayOfWeek() == DayOfWeek.SATURDAY) {
-            estimada = estimada.plusDays(2);
-        } else if (estimada.getDayOfWeek() == DayOfWeek.SUNDAY) {
-            estimada = estimada.plusDays(1);
-        }
+        // Como se entrega domingos y festivos normal, la estimada es +1 día sin saltar fin de semana.
+        // Solo se usa como fallback para pedidos históricos sin fecha elegida.
+        LocalDate estimada = pedido.getCreadoEn().toLocalDate().plusDays(1);
         return estimada.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    }
+
+    private String formatearEntregaProgramada(Pedido pedido) {
+        if (pedido.getFechaEntrega() == null) return "";
+        String fecha = pedido.getFechaEntrega().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        if (pedido.getHoraEntrega() == null) return fecha;
+        String inicio = String.format("%02d:%02d", pedido.getHoraEntrega().getHour(), pedido.getHoraEntrega().getMinute());
+        String fin = String.format("%02d:%02d",
+                pedido.getHoraEntrega().plusMinutes(30).getHour(), pedido.getHoraEntrega().plusMinutes(30).getMinute());
+        String franja = pedido.getHoraEntrega().getHour() < 12 ? "Mañana" : "Tarde";
+        return fecha + " · " + inicio + "-" + fin + " (" + franja + ")";
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -415,7 +422,8 @@ public class EmailServiceImpl implements EmailService {
     // ═══════════════════════════════════════════════════════════════
 
     private String buildOrderInfoCard(Pedido pedido, String fechaFormateada, String estado, boolean showEstado) {
-        String entregaEstimada = calcularFechaEntregaEstimada(pedido);
+        String entregaProgramada = formatearEntregaProgramada(pedido);
+        String entregaEstimada = entregaProgramada.isEmpty() ? calcularFechaEntregaEstimada(pedido) : "";
         String badge = showEstado ? "<p style='margin:12px 0 0 0;'>" + buildStatusBadge(estado) + "</p>" : "";
 
         StringBuilder html = new StringBuilder();
@@ -426,7 +434,9 @@ public class EmailServiceImpl implements EmailService {
         html.append(infoRow("Fecha", fechaFormateada));
         html.append(infoRow("Sede", pedido.getSede() != null ? pedido.getSede().getNombre() : "N/A"));
         html.append(infoRow("M\u00E9todo", pedido.getMetodoPago() != null ? pedido.getMetodoPago() : "N/A"));
-        if (!entregaEstimada.isEmpty()) {
+        if (!entregaProgramada.isEmpty()) {
+            html.append(infoRow("Entrega programada", entregaProgramada));
+        } else if (!entregaEstimada.isEmpty()) {
             html.append(infoRow("Entrega estimada", entregaEstimada));
         }
         html.append("</table>");

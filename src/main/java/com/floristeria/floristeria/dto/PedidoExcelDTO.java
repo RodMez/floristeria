@@ -1,7 +1,9 @@
 package com.floristeria.floristeria.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -25,4 +27,7 @@ public class PedidoExcelDTO {
     private String referenciaPago;
     private String direccionEntrega;
     private String notasEntrega;
+    private LocalDate fechaEntrega;
+    private LocalTime horaEntrega;
+    private String franjaEntrega;
 }
