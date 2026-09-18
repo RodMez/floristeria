@@ -5,6 +5,7 @@ services:
     # Tuning manual PostgreSQL — RE-VALIDAR con k6 antes del lanzamiento real.
     command: ["postgres", "-c", "shared_buffers=1GB", "-c", "work_mem=16MB", "-c", "max_connections=60"]
     environment:
+      TZ: America/Bogota
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
@@ -39,6 +40,8 @@ services:
       postgres-floristeria:
         condition: service_healthy
     environment:
+      # Zona horaria Colombia para la JVM y logs del contenedor
+      TZ: America/Bogota
       # Spring Boot debe apuntar al nombre del contenedor de la BD
       DB_URL: jdbc:postgresql://postgres-floristeria:5432/${DB_NAME}
       DB_USER: ${DB_USER}

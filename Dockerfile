@@ -23,4 +23,4 @@ COPY --from=build --chown=spring:spring /app/target/*.jar app.jar
 USER spring:spring
 
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Duser.timezone=America/Bogota", "-jar", "app.jar"]

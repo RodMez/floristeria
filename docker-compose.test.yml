@@ -4,6 +4,7 @@ services:
     container_name: db_floristeria_test
     command: ["postgres", "-c", "shared_buffers=1GB", "-c", "work_mem=16MB", "-c", "max_connections=30"]
     environment:
+      TZ: America/Bogota
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
@@ -33,6 +34,7 @@ services:
         condition: service_healthy
     # Sin ports — Coolify/Traefik enruta internamente como en producción.
     environment:
+      TZ: America/Bogota
       DB_URL: jdbc:postgresql://postgres-floristeria:5432/${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASS}
